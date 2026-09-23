@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<!--
+    ゴルフスコア一覧画面 (summary.html)
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>スコア一覧</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; margin: 0; padding: 0;
+    overflow: hidden; /* スクロールなし */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    background: #f3f6f4; color: #17352a;
+  }
+  
+  .app {
+    max-width: 520px; height: 100vh; height: 100dvh;
+    margin: auto; background: #fff;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  header {
+    flex-shrink: 0; background: #087a50; color: white; padding: 10px 14px;
+    box-shadow: 0 2px 6px #0002;
+  }
+  header .top { 
+    display: flex; align-items: center; justify-content: space-between; 
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: bold; }
+
+  .header-actions {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .nav-link {
+    color: white; background: rgba(255, 255, 255, 0.2);
+    text-decoration: none; font-size: 14px; font-weight: 700;
+    padding: 6px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .btn-reset {
+    color: #ff3b30; background: #ffffff;
+    border: none; font-size: 13px; font-weight: 700;
+    padding: 6px 10px; border-radius: 16px; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  .content {
+    flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+  }
+
+  /* 上部トータルサマリー */
+  .summary-card {
+    flex-shrink: 0; background: #f0f7f4; border-radius: 8px; padding: 6px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    text-align: center; border: 1px solid #dce8e3;
+  }
+  .summary-card small { font-size: 12px; color: #586c63; font-weight: bold; display: block; }
+  .summary-card strong { font-size: 22px; color: #087a50; font-weight: 800; line-height: 1.1; }
+
+  /* 2列並びのメインテーブルエリア */
+  .tables-container {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 100%; overflow: hidden;
+  }
+
+  .column-box {
+    display: flex; flex-direction: column; height: 100%;
+  }
+
+  .score-table {
+    width: 100%; height: 100%; border-collapse: collapse; background: #fff;
+    border: 1px solid #dce8e3; font-size: 14px; table-layout: fixed;
+  }
+  .score-table th, .score-table td {
+    padding: 2px 2px; text-align: center; border-bottom: 1px solid #edf4f1; vertical-align: middle;
+  }
+  .score-table th {
+    background: #f5f9f7; font-size: 12px; color: #3a4a43; font-weight: bold; height: 24px;
+  }
+
+  /* 幅調整 */
+  .col-hole { width: 25%; font-weight: bold; font-size: 14px; }
+  .col-score{ width: 32%; font-weight: 800; color: #087a50; font-size: 16px; }
+  .col-ratings { width: 43%; text-align: left !important; padding-left: 4px !important; letter-spacing: 1px; color: #17352a; font-weight: bold; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+  .putt-count { font-size: 12px; color: #586c63; font-weight: normal; margin-left: 1px; }
+
+  .total-row {
+    background: #f0f7f4; font-weight: 800; color: #087a50; height: 28px; font-size: 15px;
+  }
+
+  @media (min-width: 700px) {
+    body { padding: 12px; }
+    .app { height: calc(100vh - 24px); border-radius: 14px; box-shadow: 0 8px 35px #0001; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="top">
+      <h1>スコア一覧</h1>
+      <div class="header-actions">
+        <button id="clearDataBtn" class="btn-reset">全クリア</button>
+        <a href="golf_score.html" class="nav-link">‹ 入力</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="summary-card">
+      <div><small>OUT</small><strong id="outScore">0</strong></div>
+      <div><small>IN</small><strong id="inScore">0</strong></div>
+      <div><small>TOTAL</small><strong id="totalScore">0</strong></div>
+    </div>
+
+    <div class="tables-container">
+      <!-- OUT 1〜9H -->
+      <div class="column-box">
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th style="width:25%;">Hole</th>
+              <th style="width:32%;">打(P)</th>
+              <th style="width:43%;">良否</th>
+            </tr>
+          </thead>
+          <tbody id="outBody"></tbody>
+        </table>
+      </div>
+
+      <!-- IN 10〜18H -->
+      <div class="column-box">
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th style="width:25%;">Hole</th>
+              <th style="width:32%;">打(P)</th>
+              <th style="width:43%;">良否</th>
+            </tr>
+          </thead>
+          <tbody id="inBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const MAX_SHOTS = 12;
+
+function createEmptyHoleData() {
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
+}
+
+let data = Array.from({ length: 18 }, () => createEmptyHoleData());
+
+function loadData() {
+  const saved = localStorage.getItem("golfScoreDemo");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === 18) {
+        data = parsed.map(holeShots => {
+          const filled = createEmptyHoleData();
+          holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
+            filled[i] = { club: shot.club || "－", rating: shot.rating || "－" };
+          });
+          return filled;
+        });
+      }
+    } catch(e) {}
+  } else {
+    data = Array.from({ length: 18 }, () => createEmptyHoleData());
+  }
+}
+
+function isShotEntered(shot) {
+  return (shot.club !== "" && shot.club !== "－") || (shot.rating !== "" && shot.rating !== "－");
+}
+
+function getEnteredShots(shots) {
+  return shots.filter(isShotEntered);
+}
+
+function getHoleScore(shots) {
+  return getEnteredShots(shots).length;
+}
+
+function getPuttScore(shots) {
+  return shots.filter(shot => shot.club === "PT").length;
+}
+
+function getRatingSymbols(shots) {
+  const entered = getEnteredShots(shots);
+  if (entered.length === 0) return "-";
+  return entered.map(s => (s.rating && s.rating !== "－") ? s.rating : "・").join("");
+}
+
+function renderSummary() {
+  loadData();
+  const holeScores = data.map(getHoleScore);
+  const puttScores = data.map(getPuttScore);
+
+  const outScore = holeScores.slice(0, 9).reduce((a, b) => a + b, 0);
+  const inScore = holeScores.slice(9, 18).reduce((a, b) => a + b, 0);
+  const totalScore = outScore + inScore;
+
+  const outPutts = puttScores.slice(0, 9).reduce((a, b) => a + b, 0);
+  const inPutts = puttScores.slice(9, 18).reduce((a, b) => a + b, 0);
+
+  document.getElementById("outScore").textContent = `${outScore} (${outPutts})`;
+  document.getElementById("inScore").textContent = `${inScore} (${inPutts})`;
+  document.getElementById("totalScore").textContent = `${totalScore} (${outPutts + inPutts})`;
+
+  renderTableSection("outBody", 0, 9, outScore, outPutts);
+  renderTableSection("inBody", 9, 18, inScore, inPutts);
+}
+
+function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, sectionTotalPutts) {
+  const container = document.getElementById(containerId);
+
+  let rowsHtml = "";
+
+  for (let i = startIdx; i < endIdx; i++) {
+    const holeNum = i + 1;
+    const shots = data[i];
+    const score = getHoleScore(shots);
+    const putts = getPuttScore(shots);
+    const ratingsStr = getRatingSymbols(shots);
+
+    rowsHtml += `
+      <tr>
+        <td class="col-hole">${holeNum}H</td>
+        <td class="col-score">
+          ${score > 0 ? score : "-"}
+          <span class="putt-count">${putts > 0 ? `(${putts})` : ''}</span>
+        </td>
+        <td class="col-ratings">${ratingsStr}</td>
+      </tr>
+    `;
+  }
+
+  rowsHtml += `
+    <tr class="total-row">
+      <td>計</td>
+      <td>${sectionTotalScore}<span class="putt-count">(${sectionTotalPutts})</span></td>
+      <td style="font-size:11px; font-weight:bold; text-align:center;">OUT/IN計</td>
+    </tr>
+  `;
+
+  container.innerHTML = rowsHtml;
+}
+
+// データ全消去イベント
+document.getElementById("clearDataBtn").onclick = () => {
+  if (confirm("全てのスコアデータを消去しますか？")) {
+    localStorage.removeItem("golfScoreDemo");
+    renderSummary();
+  }
+};
+
+renderSummary();
+</script>
+</body>
+</html>

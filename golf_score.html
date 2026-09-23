@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<!--
+    ゴルフスコア入力画面 (golf_score.html)
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ゴルフスコア入力</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; margin: 0; padding: 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    background: #f3f6f4; color: #17352a;
+    touch-action: manipulation; -webkit-text-size-adjust: 100%;
+  }
+  button, input, select { font: inherit; font-size: 18px; }
+  
+  .app {
+    max-width: 520px; height: 100vh; height: 100dvh;
+    margin: auto; background: #fff;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  header {
+    flex-shrink: 0; background: #087a50; color: white; padding: 10px 14px;
+    box-shadow: 0 2px 8px #0002;
+  }
+  header .top { 
+    display: flex; align-items: center; justify-content: space-between; 
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: bold; }
+  
+  .nav-link {
+    color: white; background: rgba(255, 255, 255, 0.2);
+    text-decoration: none; font-size: 14px; font-weight: 700;
+    padding: 6px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .content { 
+    flex: 1; display: flex; flex-direction: column; padding: 6px 8px; overflow: hidden;
+  }
+  
+  .round-info {
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px;
+  }
+  .stat {
+    background: #f0f7f4; border-radius: 8px; padding: 6px 2px; text-align: center;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .stat small { display: block; color: #586c63; font-size: 11px; font-weight: bold; }
+  .stat strong { display: block; margin-top: 1px; font-size: 24px; font-weight: 800; line-height: 1.1; }
+
+  .stat.highlight {
+    background: #087a50; color: #ffffff;
+    box-shadow: 0 2px 6px rgba(8, 122, 80, 0.3);
+  }
+  .stat.highlight small { color: #d1f2e4; font-weight: bold; }
+  .stat.highlight strong { font-size: 28px; color: #ffffff; }
+
+  .hole-nav {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 4px;
+  }
+  .navbtn {
+    width: 38px; height: 38px; border: 0; border-radius: 50%;
+    background: #edf4f1; color: #087a50; font-size: 22px; font-weight: bold; cursor: pointer;
+  }
+  .hole-title { text-align: center; }
+  .hole-title strong { font-size: 22px; font-weight: 800; }
+  .hole-title span { margin-left: 8px; color: #586c63; font-size: 15px; font-weight: bold; }
+
+  .card {
+    flex: 1; display: flex; flex-direction: column;
+    border: 1px solid #dce8e3; border-radius: 8px; overflow: hidden;
+  }
+  .card-title {
+    flex-shrink: 0; padding: 6px 10px; background: #f5f9f7;
+    font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; color: #3a4a43;
+  }
+
+  #shots {
+    flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+  }
+
+  .shot {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    padding: 2px 8px; border-top: 1px solid #e9efec;
+  }
+  .shot-head {
+    display: flex; align-items: center; gap: 6px; min-width: 75px; flex-shrink: 0;
+  }
+  .shot-number {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #e7f4ef; color: #087a50;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px;
+  }
+  .shot-title { font-weight: bold; font-size: 14px; color: #17352a; }
+
+  .shot-inputs {
+    display: flex; gap: 8px; flex: 1; height: 100%; align-items: center;
+  }
+
+  .select-button {
+    flex: 1; height: 90%; display: flex; justify-content: space-between; align-items: center;
+    background: #fff; border: 1.5px solid #d8e5df; border-radius: 6px; padding: 0 10px;
+    cursor: pointer; transition: background-color 0.15s, border-color 0.15s;
+  }
+  .select-button .value { font-weight: bold; color: #889990; font-size: 15px; }
+  .select-button .arrow { color: #a0b2aa; font-size: 12px; margin-left: 2px; }
+
+  .select-button.filled {
+    background: #e7f4ef; border-color: #087a50;
+  }
+  .select-button.filled .value { color: #087a50; font-weight: 800; font-size: 16px; }
+  .select-button.filled .arrow { color: #087a50; }
+
+  .popup-backdrop {
+    position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);
+    display: none; align-items: flex-end; justify-content: center; z-index: 100;
+  }
+  .popup-backdrop.show { display: flex; }
+  .popup {
+    background: #fff; width: 100%; max-width: 520px; border-radius: 16px 16px 0 0;
+    padding: 16px; max-height: 80vh; overflow-y: auto;
+  }
+  .popup-head {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  .popup-title { font-size: 18px; font-weight: bold; }
+  .popup-close { border: 0; background: none; font-size: 26px; cursor: pointer; color: #666; font-weight: bold; }
+  .popup-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .popup-option {
+    padding: 12px 6px; border: 1.5px solid #d8e5df; border-radius: 8px;
+    background: #fff; font-weight: bold; cursor: pointer; text-align: center; font-size: 16px;
+  }
+  .popup-option.selected { background: #087a50; color: #fff; border-color: #087a50; }
+  .rating-option small { display: block; font-size: 11px; font-weight: normal; color: #555; margin-top: 2px; }
+  .popup-option.selected small { color: #eee; }
+
+  @media (min-width: 700px) {
+    body { padding: 12px; }
+    .app { height: calc(100vh - 24px); border-radius: 14px; box-shadow: 0 8px 35px #0001; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="top">
+      <h1>ゴルフスコア入力</h1>
+      <a href="summary.html" class="nav-link">スコア一覧 ❯</a>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="round-info">
+      <div class="stat highlight"><small>現在のホール</small><strong id="currentHole">1</strong></div>
+      <div class="stat"><small>打数</small><strong id="holeScore">0</strong></div>
+      <div class="stat"><small>パット</small><strong id="puttScore">0</strong></div>
+      <div class="stat"><small>合計</small><strong id="totalScore">0</strong></div>
+    </div>
+
+    <div class="hole-nav">
+      <button class="navbtn" id="prevHole">‹</button>
+      <div class="hole-title"><strong id="holeLabel">1H</strong></div>
+      <button class="navbtn" id="nextHole">›</button>
+    </div>
+
+    <section class="card">
+      <div class="card-title">
+        <span>ショット記録</span>
+        <span id="shotCount">0打</span>
+      </div>
+      <div id="shots"></div>
+    </section>
+  </main>
+</div>
+
+<div class="popup-backdrop" id="popupBackdrop">
+  <div class="popup">
+    <div class="popup-head">
+      <strong class="popup-title" id="popupTitle">クラブを選択</strong>
+      <button class="popup-close" id="popupClose">×</button>
+    </div>
+    <div class="popup-options" id="popupOptions"></div>
+  </div>
+</div>
+
+<script>
+const MAX_SHOTS = 12;
+const clubs = ["－","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","チッパー","PT","OB","ペナルティ"];
+const ratings = [
+  ["◎","とても良い"],["○","良い"],["△","やや悪い"],["×","悪い"],["－","未設定"]
+];
+
+let hole = 1;
+
+function createEmptyHoleData() {
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
+}
+
+let data = Array.from({ length: 18 }, () => createEmptyHoleData());
+
+function isShotEntered(shot) {
+  const hasClub = shot.club !== "" && shot.club !== "－";
+  const hasRating = shot.rating !== "" && shot.rating !== "－";
+  return hasClub || hasRating;
+}
+
+function getHoleScore(shots) {
+  return shots.filter(isShotEntered).length;
+}
+
+function getPuttScore(shots) {
+  return shots.filter(shot => shot.club === "PT").length;
+}
+
+function save() {
+  localStorage.setItem("golfScoreDemo", JSON.stringify(data));
+}
+
+function render() {
+  document.getElementById("currentHole").textContent = hole;
+  document.getElementById("holeLabel").textContent = hole + "H";
+
+  const shots = data[hole-1];
+  const score = getHoleScore(shots);
+  const putts = getPuttScore(shots);
+
+  document.getElementById("shotCount").textContent = score + "打";
+  document.getElementById("holeScore").textContent = score;
+  document.getElementById("puttScore").textContent = putts;
+
+  const total = data.reduce((sum, h) => sum + getHoleScore(h), 0);
+  document.getElementById("totalScore").textContent = total;
+
+  const area = document.getElementById("shots");
+  area.innerHTML = "";
+
+  shots.forEach((shot, index) => {
+    const div = document.createElement("div");
+    div.className = "shot";
+
+    const isClubFilled = shot.club && shot.club !== "－";
+    const isRatingFilled = shot.rating && shot.rating !== "－";
+
+    div.innerHTML = `
+      <div class="shot-head">
+        <div class="shot-number">${index + 1}</div>
+        <div class="shot-title">第${index + 1}打</div>
+      </div>
+
+      <div class="shot-inputs">
+        <button class="select-button club-select ${isClubFilled ? 'filled' : ''}" data-shot="${index}">
+          <span class="value">${shot.club || "－"}</span>
+          <span class="arrow">›</span>
+        </button>
+
+        <button class="select-button rating-select ${isRatingFilled ? 'filled' : ''}" data-shot="${index}">
+          <span class="value">${shot.rating || "－"}</span>
+          <span class="arrow">›</span>
+        </button>
+      </div>
+    `;
+    area.appendChild(div);
+  });
+
+  document.querySelectorAll(".club-select").forEach(btn => {
+    btn.onclick = () => openPopup("club", Number(btn.dataset.shot));
+  });
+
+  document.querySelectorAll(".rating-select").forEach(btn => {
+    btn.onclick = () => openPopup("rating", Number(btn.dataset.shot));
+  });
+}
+
+let popupType = "";
+let popupShotIndex = -1;
+
+function openPopup(type, shotIndex) {
+  popupType = type;
+  popupShotIndex = shotIndex;
+
+  const title = document.getElementById("popupTitle");
+  const options = document.getElementById("popupOptions");
+  const shot = data[hole-1][shotIndex];
+
+  options.innerHTML = "";
+
+  if (type === "club") {
+    title.textContent = "クラブを選択";
+    clubs.forEach(club => {
+      const button = document.createElement("button");
+      button.className = "popup-option" + (shot.club === club ? " selected" : "");
+      button.textContent = club;
+      button.onclick = () => {
+        data[hole-1][popupShotIndex].club = club;
+        closePopup();
+        save();
+        render();
+      };
+      options.appendChild(button);
+    });
+  } else {
+    title.textContent = "ショットの良否を選択";
+    ratings.forEach(([rating, description]) => {
+      const button = document.createElement("button");
+      button.className = "popup-option rating-option" + (shot.rating === rating ? " selected" : "");
+      button.innerHTML = `${rating}<small>${description}</small>`;
+      button.onclick = () => {
+        data[hole-1][popupShotIndex].rating = rating;
+        closePopup();
+        save();
+        render();
+      };
+      options.appendChild(button);
+    });
+  }
+
+  document.getElementById("popupBackdrop").classList.add("show");
+}
+
+function closePopup() {
+  document.getElementById("popupBackdrop").classList.remove("show");
+  popupType = "";
+  popupShotIndex = -1;
+}
+
+function nextHole() {
+  if (hole < 18) { 
+    save();
+    hole++; 
+    render(); 
+  }
+}
+function prevHole() {
+  if (hole > 1) { 
+    save();
+    hole--; 
+    render(); 
+  }
+}
+
+document.getElementById("nextHole").onclick = nextHole;
+document.getElementById("prevHole").onclick = prevHole;
+
+document.getElementById("popupClose").onclick = closePopup;
+document.getElementById("popupBackdrop").onclick = (e) => {
+  if (e.target.id === "popupBackdrop") closePopup();
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePopup();
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!e.target.closest('.popup')) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+window.addEventListener("pagehide", save);
+
+const saved = localStorage.getItem("golfScoreDemo");
+if (saved) {
+  try {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length === 18) {
+      data = parsed.map(holeShots => {
+        const filled = createEmptyHoleData();
+        holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
+          filled[i] = { club: shot.club || "－", rating: shot.rating || "－" };
+        });
+        return filled;
+      });
+    }
+  } catch(e) {}
+}
+
+render();
+</script>
+</body>
+</html>
