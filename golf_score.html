@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ゴルフスコア入�?</title>
+<title>ゴルフスコア入�?</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -151,17 +151,17 @@
 <div class="app">
   <header>
     <div class="top">
-      <h1>ゴルフスコア入�?</h1>
+      <h1>ゴルフスコア入�?</h1>
       <a href="summary.html" class="nav-link">スコア一覧 ❯</a>
     </div>
   </header>
 
   <main class="content">
     <div class="round-info">
-      <div class="stat highlight"><small>現在のホ�?�ル</small><strong id="currentHole">1</strong></div>
+      <div class="stat highlight"><small>現在のホ�?�ル</small><strong id="currentHole">1</strong></div>
       <div class="stat"><small>打数</small><strong id="holeScore">0</strong></div>
-      <div class="stat"><small>パッ�?</small><strong id="puttScore">0</strong></div>
-      <div class="stat"><small>合�?</small><strong id="totalScore">0</strong></div>
+      <div class="stat"><small>パッ�?</small><strong id="puttScore">0</strong></div>
+      <div class="stat"><small>合�?</small><strong id="totalScore">0</strong></div>
     </div>
 
     <div class="hole-nav">
@@ -172,8 +172,8 @@
 
     <section class="card">
       <div class="card-title">
-        <span>ショ�?ト記録</span>
-        <span id="shotCount">0�?</span>
+        <span>ショ�?ト記録</span>
+        <span id="shotCount">0�?</span>
       </div>
       <div id="shots"></div>
     </section>
@@ -183,8 +183,8 @@
 <div class="popup-backdrop" id="popupBackdrop">
   <div class="popup">
     <div class="popup-head">
-      <strong class="popup-title" id="popupTitle">クラブを選�?</strong>
-      <button class="popup-close" id="popupClose">�?</button>
+      <strong class="popup-title" id="popupTitle">クラブを選�?</strong>
+      <button class="popup-close" id="popupClose">�?</button>
     </div>
     <div class="popup-options" id="popupOptions"></div>
   </div>
@@ -192,22 +192,22 @@
 
 <script>
 const MAX_SHOTS = 12;
-const clubs = ["?�?","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","チッパ�?�","PT","OB","ペナル�?ィ"];
+const clubs = ["?�?","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","チッパ�?�","PT","OB","ペナル�?ィ"];
 const ratings = [
-  ["�?","とても良�?"],["�?","良�?"],["△","�?�?悪�?"],["�?","悪�?"],["?�?","未設�?"]
+  ["�?","とても良�?"],["�?","良�?"],["△","�?�?悪�?"],["�?","悪�?"],["?�?","未設�?"]
 ];
 
 let hole = 1;
 
 function createEmptyHoleData() {
-  return Array.from({ length: MAX_SHOTS }, () => ({ club: "?�?", rating: "?�?" }));
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "?�?", rating: "?�?" }));
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
 
 function isShotEntered(shot) {
-  const hasClub = shot.club !== "" && shot.club !== "?�?";
-  const hasRating = shot.rating !== "" && shot.rating !== "?�?";
+  const hasClub = shot.club !== "" && shot.club !== "?�?";
+  const hasRating = shot.rating !== "" && shot.rating !== "?�?";
   return hasClub || hasRating;
 }
 
@@ -231,7 +231,7 @@ function render() {
   const score = getHoleScore(shots);
   const putts = getPuttScore(shots);
 
-  document.getElementById("shotCount").textContent = score + "�?";
+  document.getElementById("shotCount").textContent = score + "�?";
   document.getElementById("holeScore").textContent = score;
   document.getElementById("puttScore").textContent = putts;
 
@@ -245,23 +245,23 @@ function render() {
     const div = document.createElement("div");
     div.className = "shot";
 
-    const isClubFilled = shot.club && shot.club !== "?�?";
-    const isRatingFilled = shot.rating && shot.rating !== "?�?";
+    const isClubFilled = shot.club && shot.club !== "?�?";
+    const isRatingFilled = shot.rating && shot.rating !== "?�?";
 
     div.innerHTML = `
       <div class="shot-head">
         <div class="shot-number">${index + 1}</div>
-        <div class="shot-title">第${index + 1}�?</div>
+        <div class="shot-title">第${index + 1}�?</div>
       </div>
 
       <div class="shot-inputs">
         <button class="select-button club-select ${isClubFilled ? 'filled' : ''}" data-shot="${index}">
-          <span class="value">${shot.club || "?�?"}</span>
+          <span class="value">${shot.club || "?�?"}</span>
           <span class="arrow">›</span>
         </button>
 
         <button class="select-button rating-select ${isRatingFilled ? 'filled' : ''}" data-shot="${index}">
-          <span class="value">${shot.rating || "?�?"}</span>
+          <span class="value">${shot.rating || "?�?"}</span>
           <span class="arrow">›</span>
         </button>
       </div>
@@ -292,7 +292,7 @@ function openPopup(type, shotIndex) {
   options.innerHTML = "";
 
   if (type === "club") {
-    title.textContent = "クラブを選�?";
+    title.textContent = "クラブを選�?";
     clubs.forEach(club => {
       const button = document.createElement("button");
       button.className = "popup-option" + (shot.club === club ? " selected" : "");
@@ -306,7 +306,7 @@ function openPopup(type, shotIndex) {
       options.appendChild(button);
     });
   } else {
-    title.textContent = "ショ�?ト�?�良否を選�?";
+    title.textContent = "ショ�?ト�?�良否を選�?";
     ratings.forEach(([rating, description]) => {
       const button = document.createElement("button");
       button.className = "popup-option rating-option" + (shot.rating === rating ? " selected" : "");
@@ -378,7 +378,7 @@ if (saved) {
       data = parsed.map(holeShots => {
         const filled = createEmptyHoleData();
         holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
-          filled[i] = { club: shot.club || "?�?", rating: shot.rating || "?�?" };
+          filled[i] = { club: shot.club || "?�?", rating: shot.rating || "?�?" };
         });
         return filled;
       });
