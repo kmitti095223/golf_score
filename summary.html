@@ -14,6 +14,7 @@
     overflow: hidden; /* スクロールなし */
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
     background: #f3f6f4; color: #17352a;
+    touch-action: manipulation; -webkit-text-size-adjust: 100%;
   }
   
   .app {
@@ -78,13 +79,17 @@
     padding: 2px 2px; text-align: center; border-bottom: 1px solid #edf4f1; vertical-align: middle;
   }
   .score-table th {
-    background: #f5f9f7; font-size: 12px; color: #3a4a43; font-weight: bold; height: 24px;
+    background: #f5f9f7; font-size: 11px; color: #3a4a43; font-weight: bold; height: 24px;
   }
 
   /* 幅調整 */
-  .col-hole { width: 25%; font-weight: bold; font-size: 14px; }
-  .col-score{ width: 32%; font-weight: 800; color: #087a50; font-size: 16px; }
-  .col-ratings { width: 43%; text-align: left !important; padding-left: 4px !important; letter-spacing: 1px; color: #17352a; font-weight: bold; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .col-hole { width: 17%; font-weight: bold; font-size: 13px; }
+  .col-score{ width: 26%; font-weight: 800; color: #087a50; font-size: 15px; }
+  .col-ratings {
+    width: 57%; text-align: left !important; padding-left: 3px !important;
+    letter-spacing: 0.5px; color: #17352a; font-weight: bold; font-size: 12px;
+    white-space: normal; word-break: break-all; line-height: 1.15;
+  }
 
   .putt-count { font-size: 12px; color: #586c63; font-weight: normal; margin-left: 1px; }
 
@@ -124,9 +129,9 @@
         <table class="score-table">
           <thead>
             <tr>
-              <th style="width:25%;">Hole</th>
-              <th style="width:32%;">打(P)</th>
-              <th style="width:43%;">良否</th>
+              <th style="width:17%;">Hole</th>
+              <th style="width:26%;">打(P)</th>
+              <th style="width:57%;">良否</th>
             </tr>
           </thead>
           <tbody id="outBody"></tbody>
@@ -138,9 +143,9 @@
         <table class="score-table">
           <thead>
             <tr>
-              <th style="width:25%;">Hole</th>
-              <th style="width:32%;">打(P)</th>
-              <th style="width:43%;">良否</th>
+              <th style="width:17%;">Hole</th>
+              <th style="width:26%;">打(P)</th>
+              <th style="width:57%;">良否</th>
             </tr>
           </thead>
           <tbody id="inBody"></tbody>
@@ -198,7 +203,12 @@ function getPuttScore(shots) {
 function getRatingSymbols(shots) {
   const entered = getEnteredShots(shots);
   if (entered.length === 0) return "-";
-  return entered.map(s => (s.rating && s.rating !== "－") ? s.rating : "・").join("");
+  const symbols = entered.map(s => (s.rating && s.rating !== "－") ? s.rating : "・");
+  const chunks = [];
+  for (let i = 0; i < symbols.length; i += 6) {
+    chunks.push(symbols.slice(i, i + 6).join(""));
+  }
+  return chunks.join("<br>");
 }
 
 function renderSummary() {
@@ -249,7 +259,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     <tr class="total-row">
       <td>計</td>
       <td>${sectionTotalScore}<span class="putt-count">(${sectionTotalPutts})</span></td>
-      <td style="font-size:11px; font-weight:bold; text-align:center;">OUT/IN計</td>
+      <td style="font-size:11px; font-weight:bold; text-align:center;">計</td>
     </tr>
   `;
 
@@ -263,6 +273,21 @@ document.getElementById("clearDataBtn").onclick = () => {
     renderSummary();
   }
 };
+
+// スクロールおよび拡大縮小（ピンチズーム・ダブルタップ）禁止
+document.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('gesturestart', (e) => {
+  e.preventDefault();
+});
 
 renderSummary();
 </script>
