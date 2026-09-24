@@ -50,6 +50,8 @@
   }
 
   .par-label { color: #586c63; font-size: 10px; font-weight: normal; }
+  .hole-link { color: inherit; text-decoration: none; }
+  .hole-link:hover { text-decoration: underline; }
 
   .content {
     flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
@@ -319,7 +321,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
 
     rowsHtml += `
       <tr>
-        <td class="col-hole">${holeNum}H<br><span class="par-label">Par ${pars[i]}</span></td>
+        <td class="col-hole"><a class="hole-link" href="golf_score.html?hole=${holeNum}">${holeNum}H<br><span class="par-label">Par ${pars[i]}</span></a></td>
         <td class="col-score">
           ${scoreDisplay}
         </td>

@@ -199,7 +199,8 @@ const ratings = [
   ["◎","とても良い"],["○","良い"],["△","やや悪い"],["×","悪い"],["－","未設定"]
 ];
 
-let hole = 1;
+const requestedHole = Number(new URLSearchParams(window.location.search).get("hole"));
+let hole = Number.isInteger(requestedHole) && requestedHole >= 1 && requestedHole <= 18 ? requestedHole : 1;
 
 function createEmptyHoleData() {
   return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
