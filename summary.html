@@ -120,13 +120,15 @@
     background: #f0f7f4; font-weight: 800; color: #087a50; min-height: 28px; font-size: 15px;
   }
   .total-ratings {
-    font-size: 10.5px !important;
+    font-size: 12px !important;
     font-weight: bold;
     color: #17352a;
     line-height: 1.2;
     padding: 2px 2px !important;
-    letter-spacing: -0.2px;
+    letter-spacing: 0;
     text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   @media (min-width: 700px) {
@@ -313,7 +315,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     const putts = getPuttScore(shots);
     const scoreMark = getScoreMark(score, pars[i]);
     const scoreDisplay = score > 0
-      ? `${score}${putts > 0 ? ` (${putts})` : ""} ${scoreMark}`
+      ? `${score} (${putts}) ${scoreMark}`
       : "-";
     const ratingsStr = getRatingSymbols(shots);
 
@@ -336,16 +338,14 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
   }
 
   const sectionRatingsHtml =
-    `<strong class="rating-great">◎</strong>${sectionGreat}、` +
-    `○${sectionGood}、` +
-    `△${sectionFair}、` +
-    `<strong class="rating-bad">×</strong>${sectionBad}`;
+    `<strong class="rating-great">◎：${sectionGreat}</strong>、` +
+    `○：${sectionGood}、` +
+    `△：${sectionFair}、` +
+    `<strong class="rating-bad">×：${sectionBad}</strong>`;
 
   rowsHtml += `
     <tr class="total-row">
-      <td>計</td>
-      <td>${sectionTotalScore}<span class="putt-count">(${sectionTotalPutts})</span></td>
-      <td class="col-ratings total-ratings">${sectionRatingsHtml}</td>
+      <td colspan="3" class="total-ratings">${sectionRatingsHtml}</td>
     </tr>
   `;
 
