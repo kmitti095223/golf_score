@@ -41,12 +41,16 @@
     text-decoration: none; font-size: 13px; font-weight: 700;
     padding: 5px 9px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.5);
   }
+  .nav-link-subtle {
+    color: rgba(255, 255, 255, 0.72); background: transparent;
+    border-color: rgba(255, 255, 255, 0.28); font-size: 11px; font-weight: 600;
+    padding: 4px 7px;
+  }
 
   .btn-reset {
-    color: #ff3b30; background: #ffffff;
-    border: none; font-size: 12px; font-weight: 700;
-    padding: 5px 8px; border-radius: 16px; cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    color: rgba(255, 255, 255, 0.72); background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.28); font-size: 11px; font-weight: 600;
+    padding: 4px 7px; border-radius: 16px; cursor: pointer;
   }
 
   .par-label { color: #586c63; font-size: 10px; font-weight: normal; }
@@ -93,7 +97,10 @@
     border-radius: 4px; padding: 2px 0;
   }
   .col-hole a:active { background: #e7f4ef; }
-  .col-score{ width: 40%; font-weight: 800; color: #087a50; font-size: 15px; }
+  .col-score{
+    width: 40%; font-weight: 800; color: #087a50; font-size: 15px;
+    text-align: center !important; vertical-align: middle !important;
+  }
   .score-mark { font-size: 19px; font-weight: 900; }
   .score-under { color: #d32f2f; }
   .col-ratings {
@@ -126,7 +133,7 @@
     line-height: 1.2;
     padding: 2px 2px !important;
     letter-spacing: 0;
-    text-align: left !important;
+    text-align: center !important;
     white-space: normal;
     overflow-wrap: anywhere;
   }
@@ -145,8 +152,8 @@
       <h1>スコア一覧</h1>
       <div class="header-actions">
         <a href="golf_score.html" class="nav-link">‹ 入力</a>
-        <a href="par_settings.html" class="nav-link">Par設定</a>
         <a href="export.html" class="nav-link">出力 ❯</a>
+        <a href="par_settings.html" class="nav-link nav-link-subtle">Par設定</a>
         <button id="clearDataBtn" class="btn-reset">全クリア</button>
       </div>
     </div>
@@ -338,10 +345,10 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
   }
 
   const sectionRatingsHtml =
-    `<strong class="rating-great">◎：${sectionGreat}</strong>、` +
-    `○：${sectionGood}、` +
-    `△：${sectionFair}、` +
-    `<strong class="rating-bad">×：${sectionBad}</strong>`;
+    `<strong class="rating-great">◎:${sectionGreat}</strong>、` +
+    `○:${sectionGood}、` +
+    `△:${sectionFair}、` +
+    `<strong class="rating-bad">×:${sectionBad}</strong>`;
 
   rowsHtml += `
     <tr class="total-row">
