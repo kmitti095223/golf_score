@@ -131,6 +131,8 @@
   }
   .popup-title { font-size: 18px; font-weight: bold; }
   .popup-close { border: 0; background: none; font-size: 26px; cursor: pointer; color: #666; font-weight: bold; }
+  .popup-section-title { margin: 10px 0 6px; color: #3a4a43; font-size: 14px; }
+  .popup-section-title:first-child { margin-top: 0; }
   .popup-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .popup-option {
     padding: 12px 6px; border: 1.5px solid #d8e5df; border-radius: 8px;
@@ -273,63 +275,62 @@ function render() {
   });
 
   document.querySelectorAll(".club-select").forEach(btn => {
-    btn.onclick = () => openPopup("club", Number(btn.dataset.shot));
+    btn.onclick = () => openPopup(Number(btn.dataset.shot));
   });
 
   document.querySelectorAll(".rating-select").forEach(btn => {
-    btn.onclick = () => openPopup("rating", Number(btn.dataset.shot));
+    btn.onclick = () => openPopup(Number(btn.dataset.shot));
   });
 }
 
-let popupType = "";
 let popupShotIndex = -1;
 
-function openPopup(type, shotIndex) {
-  popupType = type;
+function openPopup(shotIndex) {
   popupShotIndex = shotIndex;
 
-  const title = document.getElementById("popupTitle");
-  const options = document.getElementById("popupOptions");
-  const shot = data[hole-1][shotIndex];
-
-  options.innerHTML = "";
-
-  if (type === "club") {
-    title.textContent = "クラブを選択";
-    clubs.forEach(club => {
-      const button = document.createElement("button");
-      button.className = "popup-option" + (shot.club === club ? " selected" : "");
-      button.textContent = club;
-      button.onclick = () => {
-        data[hole-1][popupShotIndex].club = club;
-        closePopup();
-        save();
-        render();
-      };
-      options.appendChild(button);
-    });
-  } else {
-    title.textContent = "ショットの良否を選択";
-    ratings.forEach(([rating, description]) => {
-      const button = document.createElement("button");
-      button.className = "popup-option rating-option" + (shot.rating === rating ? " selected" : "");
-      button.innerHTML = `${rating}<small>${description}</small>`;
-      button.onclick = () => {
-        data[hole-1][popupShotIndex].rating = rating;
-        closePopup();
-        save();
-        render();
-      };
-      options.appendChild(button);
-    });
-  }
-
+  document.getElementById("popupTitle").textContent = "クラブと良否を選択";
+  renderPopupOptions();
   document.getElementById("popupBackdrop").classList.add("show");
+}
+
+function renderPopupOptions() {
+  const options = document.getElementById("popupOptions");
+  const shot = data[hole-1][popupShotIndex];
+  options.innerHTML = "<div class=\"popup-section-title\">クラブ</div><div class=\"popup-options club-options\"></div><div class=\"popup-section-title\">良否</div><div class=\"popup-options rating-options\"></div>";
+
+  const clubOptions = options.querySelector(".club-options");
+  clubs.forEach(club => {
+    const button = document.createElement("button");
+    button.className = "popup-option" + (shot.club === club ? " selected" : "");
+    button.textContent = club;
+    button.onclick = () => {
+      data[hole-1][popupShotIndex].club = club;
+      save();
+      renderPopupOptions();
+      render();
+      document.getElementById("popupBackdrop").classList.add("show");
+    };
+    clubOptions.appendChild(button);
+  });
+
+  const ratingOptions = options.querySelector(".rating-options");
+  ratings.forEach(([rating, description]) => {
+    const button = document.createElement("button");
+    button.className = "popup-option rating-option" + (shot.rating === rating ? " selected" : "");
+    button.innerHTML = `${rating}<small>${description}</small>`;
+    button.onclick = () => {
+      data[hole-1][popupShotIndex].rating = rating;
+      save();
+      renderPopupOptions();
+      render();
+      document.getElementById("popupBackdrop").classList.add("show");
+    };
+    ratingOptions.appendChild(button);
+  });
 }
 
 function closePopup() {
   document.getElementById("popupBackdrop").classList.remove("show");
-  popupType = "";
   popupShotIndex = -1;
 }
 
