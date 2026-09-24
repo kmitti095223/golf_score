@@ -93,11 +93,11 @@
     border-radius: 4px; padding: 2px 0;
   }
   .col-hole a:active { background: #e7f4ef; }
-  .col-score{ width: 26%; font-weight: 800; color: #087a50; font-size: 15px; }
+  .col-score{ width: 40%; font-weight: 800; color: #087a50; font-size: 15px; }
   .score-mark { font-size: 19px; font-weight: 900; }
   .score-under { color: #d32f2f; }
   .col-ratings {
-    width: 57%; text-align: left !important; padding-left: 3px !important;
+    width: 43%; text-align: left !important; padding-left: 3px !important;
     letter-spacing: 0.5px; color: #17352a; font-weight: bold; font-size: 12px;
     white-space: normal; word-break: break-all; line-height: 1.15;
   }
@@ -166,8 +166,8 @@
           <thead>
             <tr>
               <th style="width:17%;">Hole</th>
-              <th style="width:26%;">スコア(P)</th>
-              <th style="width:57%;">良否</th>
+              <th style="width:40%;">スコア</th>
+              <th style="width:43%;">良否</th>
             </tr>
           </thead>
           <tbody id="outBody"></tbody>
@@ -180,8 +180,8 @@
           <thead>
             <tr>
               <th style="width:17%;">Hole</th>
-              <th style="width:26%;">スコア(P)</th>
-              <th style="width:57%;">良否</th>
+              <th style="width:40%;">スコア</th>
+              <th style="width:43%;">良否</th>
             </tr>
           </thead>
           <tbody id="inBody"></tbody>
@@ -315,7 +315,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     const putts = getPuttScore(shots);
     const scoreMark = getScoreMark(score, pars[i]);
     const scoreDisplay = score > 0
-      ? `${score} (${putts}) ${scoreMark}`
+      ? `${score}(${putts}) ${scoreMark}`
       : "-";
     const ratingsStr = getRatingSymbols(shots);
 
@@ -328,7 +328,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
 
     rowsHtml += `
       <tr>
-        <td class="col-hole"><a class="hole-link" href="golf_score.html?hole=${holeNum}">${holeNum}H<br><span class="par-label">Par ${pars[i]}</span></a></td>
+        <td class="col-hole"><a class="hole-link" href="golf_score.html?hole=${holeNum}">${holeNum}H<br><span class="par-label">(${pars[i]})</span></a></td>
         <td class="col-score">
           ${scoreDisplay}
         </td>
