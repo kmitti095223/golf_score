@@ -87,6 +87,8 @@
   /* 幅調整 */
   .col-hole { width: 17%; font-weight: bold; font-size: 13px; }
   .col-score{ width: 26%; font-weight: 800; color: #087a50; font-size: 15px; }
+  .score-mark { font-size: 19px; font-weight: 900; }
+  .score-under { color: #d32f2f; }
   .col-ratings {
     width: 57%; text-align: left !important; padding-left: 3px !important;
     letter-spacing: 0.5px; color: #17352a; font-weight: bold; font-size: 12px;
@@ -155,7 +157,7 @@
           <thead>
             <tr>
               <th style="width:17%;">Hole</th>
-              <th style="width:26%;">打(P)</th>
+              <th style="width:26%;">スコア(P)</th>
               <th style="width:57%;">良否</th>
             </tr>
           </thead>
@@ -169,7 +171,7 @@
           <thead>
             <tr>
               <th style="width:17%;">Hole</th>
-              <th style="width:26%;">打(P)</th>
+              <th style="width:26%;">スコア(P)</th>
               <th style="width:57%;">良否</th>
             </tr>
           </thead>
@@ -241,6 +243,16 @@ function getPuttScore(shots) {
   return shots.filter(shot => shot.club === "PT").length;
 }
 
+function getScoreMark(score, par) {
+  if (score === 0) return "-";
+  const difference = score - par;
+  if (difference <= -1) return '<span class="score-mark score-under">○</span>';
+  if (difference === 0) return '<span class="score-mark">ー</span>';
+  if (difference === 1) return '<span class="score-mark">△</span>';
+  if (difference === 2) return '<span class="score-mark">□</span>';
+  return `<span class="score-mark">+${difference}</span>`;
+}
+
 function getRatingSymbols(shots) {
   const entered = getEnteredShots(shots);
   if (entered.length === 0) return "-";
@@ -292,6 +304,10 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     const shots = data[i];
     const score = getHoleScore(shots);
     const putts = getPuttScore(shots);
+    const scoreMark = getScoreMark(score, pars[i]);
+    const scoreDisplay = score > 0
+      ? `${score}${putts > 0 ? ` (${putts})` : ""} ${scoreMark}`
+      : "-";
     const ratingsStr = getRatingSymbols(shots);
 
     shots.forEach(shot => {
@@ -305,8 +321,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
       <tr>
         <td class="col-hole">${holeNum}H<br><span class="par-label">Par ${pars[i]}</span></td>
         <td class="col-score">
-          ${score > 0 ? score : "-"}
-          <span class="putt-count">${putts > 0 ? `(${putts})` : ''}</span>
+          ${scoreDisplay}
         </td>
         <td class="col-ratings">${ratingsStr}</td>
       </tr>
