@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-    ゴルフスコア入力画面 (golf_score.html)
+    スコア入力画面 (golf_score.html)
 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ゴルフスコア入力</title>
+<title>スコア入力</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -44,7 +44,7 @@
   }
   
   .round-info {
-    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px;
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px;
   }
   .stat {
     background: #f0f7f4; border-radius: 8px; padding: 6px 2px; text-align: center;
@@ -52,6 +52,8 @@
   }
   .stat small { display: block; color: #586c63; font-size: 11px; font-weight: bold; }
   .stat strong { display: block; margin-top: 1px; font-size: 24px; font-weight: 800; line-height: 1.1; }
+  .stat .score-mark { font-size: 24px; }
+  .score-under { color: #d32f2f; }
 
   .stat.highlight {
     background: #087a50; color: #ffffff;
@@ -61,14 +63,17 @@
   .stat.highlight strong { font-size: 28px; color: #ffffff; }
 
   .hole-nav {
-    flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 4px;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 4px;
   }
   .navbtn {
     width: 38px; height: 38px; border: 0; border-radius: 50%;
     background: #edf4f1; color: #087a50; font-size: 22px; font-weight: bold; cursor: pointer;
   }
   .hole-title { text-align: center; }
-  .hole-title strong { font-size: 22px; font-weight: 800; }
+  .hole-title strong {
+    display: inline-block; min-width: 92px; padding: 4px 18px; border-radius: 8px;
+    background: #087a50; color: #fff; font-size: 28px; font-weight: 800; line-height: 1.1;
+  }
   .hole-title span { margin-left: 8px; color: #586c63; font-size: 15px; font-weight: bold; }
 
   .card {
@@ -178,17 +183,16 @@
   </header>
 
   <main class="content">
-    <div class="round-info">
-      <div class="stat highlight"><small>現在のホール</small><strong id="currentHole">1</strong></div>
-      <div class="stat"><small>打数</small><strong id="holeScore">0</strong></div>
-      <div class="stat"><small>パット</small><strong id="puttScore">0</strong></div>
-      <div class="stat"><small>合計</small><strong id="totalScore">0</strong></div>
-    </div>
-
     <div class="hole-nav">
       <button class="navbtn" id="prevHole">‹</button>
       <div class="hole-title"><strong id="holeLabel">1H</strong></div>
       <button class="navbtn" id="nextHole">›</button>
+    </div>
+
+    <div class="round-info">
+      <div class="stat"><small>Par</small><strong id="currentPar">4</strong></div>
+      <div class="stat"><small>スコア</small><strong id="holeScore">0(0)</strong></div>
+      <div class="stat"><small>記号</small><strong id="currentScoreMark" class="score-mark">-</strong></div>
     </div>
 
     <section class="card">
@@ -234,6 +238,7 @@ function createEmptyHoleData() {
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
+let pars = Array.from({ length: 18 }, () => 4);
 
 function isShotEntered(shot) {
   const hasClub = shot.club !== "" && shot.club !== "－";
@@ -249,24 +254,48 @@ function getPuttScore(shots) {
   return shots.filter(shot => shot.club === "PT").length;
 }
 
+function loadPars() {
+  const saved = localStorage.getItem("golfParSettings");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === 18) {
+        pars = parsed.map(value => {
+          const par = Number(value);
+          return Number.isInteger(par) && par >= 3 && par <= 6 ? par : 4;
+        });
+      }
+    } catch(e) {}
+  }
+}
+
+function getScoreMark(score, par) {
+  if (score === 0) return "-";
+  const difference = score - par;
+  if (difference <= -1) return '<span class="score-mark score-under">○</span>';
+  if (difference === 0) return '<span class="score-mark">ー</span>';
+  if (difference === 1) return '<span class="score-mark">△</span>';
+  if (difference === 2) return '<span class="score-mark">□</span>';
+  return `<span class="score-mark">+${difference}</span>`;
+}
+
 function save() {
   localStorage.setItem("golfScoreDemo", JSON.stringify(data));
 }
 
 function render() {
-  document.getElementById("currentHole").textContent = hole;
   document.getElementById("holeLabel").textContent = hole + "H";
+  loadPars();
 
   const shots = data[hole-1];
   const score = getHoleScore(shots);
   const putts = getPuttScore(shots);
+  const par = pars[hole-1];
 
   document.getElementById("shotCount").textContent = score + "打";
-  document.getElementById("holeScore").textContent = score;
-  document.getElementById("puttScore").textContent = putts;
-
-  const total = data.reduce((sum, h) => sum + getHoleScore(h), 0);
-  document.getElementById("totalScore").textContent = total;
+  document.getElementById("holeScore").textContent = `${score}(${putts})`;
+  document.getElementById("currentPar").textContent = par;
+  document.getElementById("currentScoreMark").innerHTML = getScoreMark(score, par);
 
   const area = document.getElementById("shots");
   area.innerHTML = "";
