@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!--
+    ホール別パー設定画面 (par_settings.html)
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>パー設定</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; margin: 0; padding: 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    background: #f3f6f4; color: #17352a;
+    touch-action: manipulation; -webkit-text-size-adjust: 100%;
+  }
+  button, input { font: inherit; font-size: 18px; }
+
+  .app {
+    max-width: 520px; height: 100vh; height: 100dvh;
+    margin: auto; background: #fff;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  header {
+    flex-shrink: 0; background: #087a50; color: white; padding: 10px 14px;
+    box-shadow: 0 2px 8px #0002;
+  }
+  header .top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: bold; }
+
+  .nav-link {
+    color: white; background: rgba(255, 255, 255, 0.2);
+    text-decoration: none; font-size: 14px; font-weight: 700;
+    padding: 6px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .content {
+    flex: 1; display: flex; flex-direction: column; gap: 8px;
+    padding: 10px 12px; min-height: 0; overflow: hidden;
+  }
+
+  .description {
+    flex-shrink: 0; margin: 0; padding: 8px 10px;
+    background: #f0f7f4; border: 1px solid #dce8e3; border-radius: 8px;
+    color: #3a4a43; font-size: 13px; line-height: 1.4;
+  }
+
+  .par-grid {
+    flex: 1; min-height: 0; display: grid;
+    grid-template-columns: repeat(2, 1fr); gap: 8px;
+    overflow-y: auto; align-content: start;
+  }
+
+  .par-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    min-height: 52px; padding: 8px 10px;
+    border: 1px solid #dce8e3; border-radius: 8px; background: #fff;
+  }
+  .hole-label { font-weight: 800; font-size: 16px; }
+  .par-control { display: flex; align-items: center; gap: 5px; }
+  .par-control button {
+    width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+    background: #edf4f1; color: #087a50; font-size: 22px; font-weight: bold;
+    cursor: pointer;
+  }
+  .par-input {
+    width: 42px; height: 36px; padding: 0; text-align: center;
+    border: 1.5px solid #087a50; border-radius: 6px;
+    color: #087a50; font-weight: 800; background: #f7fbf9;
+  }
+  .par-input:focus { outline: 2px solid #b7dfd0; outline-offset: 1px; }
+
+  .actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .action-button {
+    flex: 1; padding: 10px 8px; border: 0; border-radius: 8px;
+    font-size: 15px; font-weight: bold; cursor: pointer;
+  }
+  .save-button { background: #087a50; color: #fff; }
+  .reset-button { background: #e7f4ef; color: #087a50; border: 1.5px solid #087a50; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    padding: 10px 18px; border-radius: 20px; background: rgba(23, 53, 42, 0.92);
+    color: #fff; font-size: 14px; font-weight: bold; opacity: 0;
+    pointer-events: none; transition: opacity 0.2s; z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (min-width: 700px) {
+    body { padding: 12px; }
+    .app { height: calc(100vh - 24px); border-radius: 14px; box-shadow: 0 8px 35px #0001; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="top">
+      <h1>各ホールのパー設定</h1>
+      <a href="summary.html" class="nav-link">‹ 一覧</a>
+    </div>
+  </header>
+
+  <main class="content">
+    <p class="description">各ホールのパーを設定してください。設定値はこの端末に保存されます。</p>
+    <div id="parGrid" class="par-grid"></div>
+    <div class="actions">
+      <button id="resetButton" class="action-button reset-button">標準値に戻す</button>
+      <button id="saveButton" class="action-button save-button">保存する</button>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast">保存しました</div>
+
+<script>
+const HOLE_COUNT = 18;
+const DEFAULT_PAR = 4;
+const STORAGE_KEY = "golfParSettings";
+const MIN_PAR = 3;
+const MAX_PAR = 6;
+
+function createDefaultPars() {
+  return Array.from({ length: HOLE_COUNT }, () => DEFAULT_PAR);
+}
+
+function loadPars() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return createDefaultPars();
+
+  try {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length === HOLE_COUNT) {
+      return parsed.map(value => {
+        const par = Number(value);
+        return Number.isInteger(par) && par >= MIN_PAR && par <= MAX_PAR ? par : DEFAULT_PAR;
+      });
+    }
+  } catch (e) {}
+  return createDefaultPars();
+}
+
+function render(pars) {
+  const grid = document.getElementById("parGrid");
+  grid.innerHTML = pars.map((par, index) => `
+    <label class="par-item">
+      <span class="hole-label">${index + 1}H</span>
+      <span class="par-control">
+        <button type="button" class="decrease" data-index="${index}" aria-label="${index + 1}Hのパーを下げる">−</button>
+        <input class="par-input" type="number" min="${MIN_PAR}" max="${MAX_PAR}" step="1" value="${par}" data-index="${index}" aria-label="${index + 1}Hのパー">
+        <button type="button" class="increase" data-index="${index}" aria-label="${index + 1}Hのパーを上げる">＋</button>
+      </span>
+    </label>
+  `).join("");
+
+  grid.querySelectorAll(".decrease").forEach(button => {
+    button.onclick = () => changePar(Number(button.dataset.index), -1);
+  });
+  grid.querySelectorAll(".increase").forEach(button => {
+    button.onclick = () => changePar(Number(button.dataset.index), 1);
+  });
+}
+
+function getParsFromInputs() {
+  return Array.from(document.querySelectorAll(".par-input"), input => {
+    const par = Number(input.value);
+    return Number.isInteger(par) && par >= MIN_PAR && par <= MAX_PAR ? par : DEFAULT_PAR;
+  });
+}
+
+function changePar(index, amount) {
+  const input = document.querySelector(`.par-input[data-index="${index}"]`);
+  const nextPar = Math.min(MAX_PAR, Math.max(MIN_PAR, Number(input.value || DEFAULT_PAR) + amount));
+  input.value = nextPar;
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+document.getElementById("saveButton").onclick = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(getParsFromInputs()));
+  showToast("パー設定を保存しました");
+};
+
+document.getElementById("resetButton").onclick = () => {
+  render(createDefaultPars());
+};
+
+document.addEventListener("touchmove", e => {
+  if (!e.target.closest(".par-grid")) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener("touchstart", e => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener("gesturestart", e => e.preventDefault());
+
+render(loadPars());
+</script>
+</body>
+</html>

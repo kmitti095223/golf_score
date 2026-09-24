@@ -49,6 +49,8 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
 
+  .par-label { color: #586c63; font-size: 10px; font-weight: normal; }
+
   .content {
     flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
   }
@@ -132,6 +134,7 @@
       <h1>スコア一覧</h1>
       <div class="header-actions">
         <a href="golf_score.html" class="nav-link">‹ 入力</a>
+        <a href="par_settings.html" class="nav-link">Par設定</a>
         <a href="export.html" class="nav-link">出力 ❯</a>
         <button id="clearDataBtn" class="btn-reset">全クリア</button>
       </div>
@@ -185,6 +188,7 @@ function createEmptyHoleData() {
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
+let pars = Array.from({ length: 18 }, () => 4);
 
 function loadData() {
   const saved = localStorage.getItem("golfScoreDemo");
@@ -203,6 +207,21 @@ function loadData() {
     } catch(e) {}
   } else {
     data = Array.from({ length: 18 }, () => createEmptyHoleData());
+  }
+}
+
+function loadPars() {
+  const saved = localStorage.getItem("golfParSettings");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === 18) {
+        pars = parsed.map(value => {
+          const par = Number(value);
+          return Number.isInteger(par) && par >= 3 && par <= 6 ? par : 4;
+        });
+      }
+    } catch(e) {}
   }
 }
 
@@ -240,6 +259,7 @@ function getRatingSymbols(shots) {
 
 function renderSummary() {
   loadData();
+  loadPars();
   const holeScores = data.map(getHoleScore);
   const puttScores = data.map(getPuttScore);
 
@@ -283,7 +303,7 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
 
     rowsHtml += `
       <tr>
-        <td class="col-hole">${holeNum}H</td>
+        <td class="col-hole">${holeNum}H<br><span class="par-label">Par ${pars[i]}</span></td>
         <td class="col-score">
           ${score > 0 ? score : "-"}
           <span class="putt-count">${putts > 0 ? `(${putts})` : ''}</span>
