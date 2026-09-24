@@ -127,10 +127,18 @@
     padding: 16px; max-height: 80vh; overflow-y: auto;
   }
   .popup-head {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
   }
   .popup-title { font-size: 18px; font-weight: bold; }
   .popup-close { border: 0; background: none; font-size: 26px; cursor: pointer; color: #666; font-weight: bold; }
+  .popup-step {
+    font-size: 12px; color: #586c63; font-weight: bold; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .popup-step-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #dce8e3; display: inline-block;
+  }
+  .popup-step-dot.active { background: #087a50; }
   .popup-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .popup-option {
     padding: 12px 6px; border: 1.5px solid #d8e5df; border-radius: 8px;
@@ -186,13 +194,18 @@
       <strong class="popup-title" id="popupTitle">クラブを選択</strong>
       <button class="popup-close" id="popupClose">×</button>
     </div>
+    <div class="popup-step" id="popupStep">
+      <span class="popup-step-dot active" id="stepDot1"></span>ステップ1：クラブ
+      <span style="margin-left:6px"></span>
+      <span class="popup-step-dot" id="stepDot2"></span>ステップ2：良否
+    </div>
     <div class="popup-options" id="popupOptions"></div>
   </div>
 </div>
 
 <script>
 const MAX_SHOTS = 12;
-const clubs = ["－","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","チッパー","PT","OB","ペナルティ"];
+const clubs = ["－","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","CP","PT","OB","ペナルティ"];
 const ratings = [
   ["◎","とても良い"],["○","良い"],["△","やや悪い"],["×","悪い"],["－","未設定"]
 ];
@@ -384,6 +397,13 @@ if (saved) {
       });
     }
   } catch(e) {}
+}
+
+// URLパラメータ ?hole=N でホールを指定
+const params = new URLSearchParams(window.location.search);
+const paramHole = parseInt(params.get("hole"), 10);
+if (!isNaN(paramHole) && paramHole >= 1 && paramHole <= 18) {
+  hole = paramHole;
 }
 
 render();
