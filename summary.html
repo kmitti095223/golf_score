@@ -50,7 +50,7 @@
   }
 
   .content {
-    flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+    flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
   }
 
   /* 上部トータルサマリー */
@@ -64,7 +64,7 @@
 
   /* 2列並びのメインテーブルエリア */
   .tables-container {
-    flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 100%; overflow: hidden;
+    flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 100%; overflow: hidden;
   }
 
   .column-box {
@@ -106,7 +106,16 @@
   .putt-count { font-size: 12px; color: #586c63; font-weight: normal; margin-left: 1px; }
 
   .total-row {
-    background: #f0f7f4; font-weight: 800; color: #087a50; height: 28px; font-size: 15px;
+    background: #f0f7f4; font-weight: 800; color: #087a50; min-height: 28px; font-size: 15px;
+  }
+  .total-ratings {
+    font-size: 10.5px !important;
+    font-weight: bold;
+    color: #17352a;
+    line-height: 1.2;
+    padding: 2px 2px !important;
+    letter-spacing: -0.2px;
+    text-align: left !important;
   }
 
   @media (min-width: 700px) {
@@ -252,6 +261,10 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
   const container = document.getElementById(containerId);
 
   let rowsHtml = "";
+  let sectionGreat = 0; // ◎
+  let sectionGood = 0;  // ○
+  let sectionFair = 0;  // △
+  let sectionBad = 0;   // ×
 
   for (let i = startIdx; i < endIdx; i++) {
     const holeNum = i + 1;
@@ -259,6 +272,13 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     const score = getHoleScore(shots);
     const putts = getPuttScore(shots);
     const ratingsStr = getRatingSymbols(shots);
+
+    shots.forEach(shot => {
+      if (shot.rating === "◎") sectionGreat++;
+      else if (shot.rating === "○") sectionGood++;
+      else if (shot.rating === "△") sectionFair++;
+      else if (shot.rating === "×") sectionBad++;
+    });
 
     rowsHtml += `
       <tr>
@@ -272,11 +292,17 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
     `;
   }
 
+  const sectionRatingsHtml =
+    `<strong class="rating-great">◎</strong>${sectionGreat}、` +
+    `○${sectionGood}、` +
+    `△${sectionFair}、` +
+    `<strong class="rating-bad">×</strong>${sectionBad}`;
+
   rowsHtml += `
     <tr class="total-row">
       <td>計</td>
       <td>${sectionTotalScore}<span class="putt-count">(${sectionTotalPutts})</span></td>
-      <td style="font-size:11px; font-weight:bold; text-align:center;">計</td>
+      <td class="col-ratings total-ratings">${sectionRatingsHtml}</td>
     </tr>
   `;
 
