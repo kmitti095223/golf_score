@@ -150,7 +150,11 @@ function loadData() {
         data = parsed.map(holeShots => {
           const filled = createEmptyHoleData();
           holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
-            filled[i] = { club: shot.club || "－", rating: shot.rating || "－" };
+            filled[i] = {
+              club: shot.club || "－",
+              rating: shot.rating || "－",
+              ...(shot.location ? { location: shot.location } : {})
+            };
           });
           return filled;
         });
@@ -175,7 +179,9 @@ function generateTsv() {
         shotNum++;
         const club = hasClub ? shot.club : "";
         const rating = hasRating ? shot.rating : "";
-        lines.push(`${holeNum}\t${shotNum}\t${club}\t${rating}`);
+        const latitude = shot.location?.latitude ?? "";
+        const longitude = shot.location?.longitude ?? "";
+        lines.push(`${holeNum}\t${shotNum}\t${club}\t${rating}\t${latitude}\t${longitude}`);
       }
     });
   });
