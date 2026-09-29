@@ -44,7 +44,7 @@
   }
   
   .round-info {
-    flex-shrink: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px;
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 6px; margin-bottom: 6px;
   }
   .stat {
     background: #f0f7f4; border-radius: 8px; padding: 6px 2px; text-align: center;
@@ -54,6 +54,12 @@
   .stat strong { display: block; margin-top: 1px; font-size: 24px; font-weight: 800; line-height: 1.1; }
   .stat .score-mark { font-size: 24px; }
   .score-under { color: #d32f2f; }
+  .quick-register-btn {
+    min-width: 58px; min-height: 54px; padding: 4px 6px; border: 1px solid #087a50;
+    border-radius: 6px; background: #087a50; color: #fff; font-size: 11px; font-weight: bold;
+    white-space: nowrap; cursor: pointer;
+  }
+  .quick-register-btn:disabled { opacity: 0.45; cursor: default; }
 
   .stat.highlight {
     background: #087a50; color: #ffffff;
@@ -214,6 +220,7 @@
       <div class="stat"><small>Par</small><strong id="currentPar">4</strong></div>
       <div class="stat"><small>スコア</small><strong id="holeScore">0(0)</strong></div>
       <div class="stat"><small>記号</small><strong id="currentScoreMark" class="score-mark">-</strong></div>
+      <button type="button" class="quick-register-btn" id="quickRegisterBtn">簡易登録</button>
     </div>
 
     <section class="card">
@@ -315,6 +322,7 @@ function captureShotLocation(shotIndex, holeIndex, shot, force = false) {
       longitude: position.coords.longitude
     };
     save();
+    render();
   }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
 }
 
@@ -331,6 +339,7 @@ function render() {
   document.getElementById("holeScore").textContent = `${score}(${putts})`;
   document.getElementById("currentPar").textContent = par;
   document.getElementById("currentScoreMark").innerHTML = getScoreMark(score, par);
+  document.getElementById("quickRegisterBtn").disabled = getNextShotIndex(shots) >= MAX_SHOTS;
 
   const area = document.getElementById("shots");
   area.innerHTML = "";
@@ -381,12 +390,35 @@ function render() {
 let popupShotIndex = -1;
 let popupClubSelection = "－";
 
+function getNextShotIndex(shots) {
+  const lastEnteredShotIndex = shots.reduce((lastIndex, shot, index) => isShotEntered(shot) ? index : lastIndex, -1);
+  return lastEnteredShotIndex + 1;
+}
+
 function getDefaultClub(par, shotIndex) {
   const shotNumber = shotIndex + 1;
   if (par === 3) return shotNumber === 1 ? "UT4" : shotNumber === 2 ? "CP" : "PT";
   if (par === 4) return shotNumber === 1 ? "1W" : shotNumber === 2 ? "UT4" : shotNumber === 3 ? "CP" : "PT";
   if (par === 5) return shotNumber === 1 ? "1W" : shotNumber <= 3 ? "UT4" : shotNumber === 4 ? "CP" : "PT";
   return "－";
+}
+
+function quickRegisterShot() {
+  const holeIndex = hole - 1;
+  const shotIndex = getNextShotIndex(data[holeIndex]);
+  if (shotIndex >= MAX_SHOTS) return;
+
+  loadPars();
+  const defaultClub = getDefaultClub(pars[holeIndex], shotIndex);
+  const shot = {
+    club: defaultClub === "－" ? "1W" : defaultClub,
+    rating: "－",
+    bunker: false
+  };
+  data[holeIndex][shotIndex] = shot;
+  save();
+  render();
+  captureShotLocation(shotIndex, holeIndex, shot);
 }
 
 function openPopup(shotIndex) {
@@ -400,6 +432,8 @@ function openPopup(shotIndex) {
   document.getElementById("popupBackdrop").classList.add("show");
 }
 
+
+document.getElementById("quickRegisterBtn").onclick = quickRegisterShot;
 function renderPopupOptions() {
   const options = document.getElementById("popupOptions");
   const shot = data[hole-1][popupShotIndex];
