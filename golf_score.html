@@ -142,7 +142,7 @@
   }
   .popup-title { font-size: 18px; font-weight: bold; }
   .popup-actions {
-    display: flex; justify-content: flex-end; align-items: center; gap: 6px;
+    display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 6px;
     flex-shrink: 0; padding-top: 10px; margin-top: 8px; border-top: 1px solid #e9efec;
   }
   .popup-clear {
@@ -153,6 +153,11 @@
     border: 0; border-radius: 6px; background: #087a50; color: #fff;
     min-width: 108px; min-height: 44px; padding: 8px 20px;
     font-size: 16px; cursor: pointer; font-weight: bold;
+  }
+  .popup-force-location {
+    grid-column: 1 / -1; min-height: 44px; border: 1.5px solid #087a50;
+    border-radius: 6px; background: #e7f4ef; color: #087a50;
+    font-size: 14px; font-weight: bold; cursor: pointer;
   }
   .popup-section-title { margin: 7px 0 4px; color: #3a4a43; font-size: 13px; }
   .popup-section-title:first-child { margin-top: 0; }
@@ -229,6 +234,7 @@
     <div class="popup-actions">
       <button class="popup-clear" id="popupClear">入力をクリア</button>
       <button class="popup-close" id="popupClose">完了</button>
+      <button class="popup-force-location" id="popupForceLocation">座標を強制更新して完了</button>
     </div>
   </div>
 </div>
@@ -293,8 +299,8 @@ function save() {
   localStorage.setItem("golfScoreDemo", JSON.stringify(data));
 }
 
-function captureShotLocation(shotIndex, holeIndex, shot) {
-  if (!navigator.geolocation || shot.location) return;
+function captureShotLocation(shotIndex, holeIndex, shot, force = false) {
+  if (!navigator.geolocation || (shot.location && !force)) return;
 
   navigator.geolocation.getCurrentPosition(position => {
     if (data[holeIndex][shotIndex] !== shot || !isShotEntered(shot)) return;
@@ -428,11 +434,11 @@ function renderPopupOptions() {
   });
 }
 
-function closePopup() {
+function closePopup(forceLocationUpdate = false) {
   if (popupShotIndex >= 0) {
     const holeIndex = hole - 1;
     const shot = data[holeIndex][popupShotIndex];
-    if (isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot);
+    if (isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot, forceLocationUpdate);
   }
   document.getElementById("popupBackdrop").classList.remove("show");
   popupShotIndex = -1;
@@ -457,7 +463,8 @@ function prevHole() {
 document.getElementById("nextHole").onclick = nextHole;
 document.getElementById("prevHole").onclick = prevHole;
 
-document.getElementById("popupClose").onclick = closePopup;
+document.getElementById("popupClose").onclick = () => closePopup();
+document.getElementById("popupForceLocation").onclick = () => closePopup(true);
 document.getElementById("popupClear").onclick = () => {
   if (popupShotIndex < 0) return;
   data[hole-1][popupShotIndex] = { club: "－", rating: "－" };
