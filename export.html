@@ -153,6 +153,7 @@ function loadData() {
             filled[i] = {
               club: shot.club || "－",
               rating: shot.rating || "－",
+              bunker: shot.bunker === true,
               ...(shot.location ? { location: shot.location } : {})
             };
           });
@@ -177,7 +178,7 @@ function generateTsv() {
 
       if (hasClub || hasRating) {
         shotNum++;
-        const club = hasClub ? shot.club : "";
+        const club = hasClub ? `${shot.club}${shot.bunker ? "-B" : ""}` : "";
         const rating = hasRating ? shot.rating : "";
         const latitude = shot.location?.latitude ?? "";
         const longitude = shot.location?.longitude ?? "";

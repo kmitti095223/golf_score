@@ -113,6 +113,11 @@
   }
   .shot-location span { display: block; }
   .shot-location:empty { min-height: 1px; }
+  .popup-bunker-row {
+    flex-shrink: 0; padding: 6px 0; color: #17352a; font-size: 14px; font-weight: bold;
+  }
+  .popup-bunker-row label { display: flex; align-items: center; gap: 8px; }
+  .popup-bunker-row input { width: 20px; height: 20px; margin: 0; accent-color: #087a50; }
 
   .select-button {
     flex: 1; height: 90%; display: flex; justify-content: space-between; align-items: center;
@@ -250,7 +255,7 @@ const requestedHole = Number(new URLSearchParams(window.location.search).get("ho
 let hole = Number.isInteger(requestedHole) && requestedHole >= 1 && requestedHole <= 18 ? requestedHole : 1;
 
 function createEmptyHoleData() {
-  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", bunker: false }));
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
@@ -338,6 +343,7 @@ function render() {
     const location = shot.location;
     const latitude = location ? Number(location.latitude).toFixed(6) : "";
     const longitude = location ? Number(location.longitude).toFixed(6) : "";
+    const displayClub = `${shot.club || "－"}${shot.bunker ? "-B" : ""}`;
 
     div.innerHTML = `
       <div class="shot-head">
@@ -347,7 +353,7 @@ function render() {
 
       <div class="shot-inputs">
         <button class="select-button club-select ${isClubFilled ? 'filled' : ''}" data-shot="${index}">
-          <span class="value">${shot.club || "－"}</span>
+          <span class="value">${displayClub}</span>
           <span class="arrow">›</span>
         </button>
 
@@ -396,7 +402,14 @@ function openPopup(shotIndex) {
 function renderPopupOptions() {
   const options = document.getElementById("popupOptions");
   const shot = data[hole-1][popupShotIndex];
-  options.innerHTML = "<div class=\"popup-section-title\">クラブ</div><div class=\"popup-options club-options\"></div><div class=\"popup-section-title\">良否</div><div class=\"popup-options rating-options\"></div>";
+  options.innerHTML = "<div class=\"popup-section-title\">クラブ</div><div class=\"popup-options club-options\"></div><div class=\"popup-bunker-row\"><label><input type=\"checkbox\" id=\"popupBunkerCheck\">バンカー</label></div><div class=\"popup-section-title\">良否</div><div class=\"popup-options rating-options\"></div>";
+  const bunkerCheck = options.querySelector("#popupBunkerCheck");
+  bunkerCheck.checked = shot.bunker === true;
+  bunkerCheck.onchange = () => {
+    shot.bunker = bunkerCheck.checked;
+    save();
+    render();
+  };
 
   const clubOptions = options.querySelector(".club-options");
   clubs.forEach(club => {
@@ -467,7 +480,7 @@ document.getElementById("popupClose").onclick = () => closePopup();
 document.getElementById("popupForceLocation").onclick = () => closePopup(true);
 document.getElementById("popupClear").onclick = () => {
   if (popupShotIndex < 0) return;
-  data[hole-1][popupShotIndex] = { club: "－", rating: "－" };
+  data[hole-1][popupShotIndex] = { club: "－", rating: "－", bunker: false };
   save();
   render();
   closePopup();
@@ -504,6 +517,7 @@ if (saved) {
           filled[i] = {
             club: shot.club || "－",
             rating: shot.rating || "－",
+            bunker: shot.bunker === true,
             ...(shot.location ? { location: shot.location } : {})
           };
         });
