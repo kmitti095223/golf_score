@@ -235,7 +235,7 @@
 
 <script>
 const MAX_SHOTS = 12;
-const clubs = ["－","1W","5W","U4","5I","6I","7I","8I","9I","PW","SW","52度","58度","CP","PT","OB","ペナルティ"];
+const clubs = ["－","1W","5W","U4","UT4","5I","6I","7I","8I","9I","PW","SW","52度","58度","CP","PT","OK","OB","ペナルティ"];
 const ratings = [
   ["◎","とても良い"],["○","良い"],["△","やや悪い"],["×","悪い"],["－","未設定"]
 ];
@@ -366,9 +366,21 @@ function render() {
 }
 
 let popupShotIndex = -1;
+let popupClubSelection = "－";
+
+function getDefaultClub(par, shotIndex) {
+  const shotNumber = shotIndex + 1;
+  if (par === 3) return shotNumber === 1 ? "UT4" : shotNumber === 2 ? "CP" : "PT";
+  if (par === 4) return shotNumber === 1 ? "1W" : shotNumber === 2 ? "UT4" : shotNumber === 3 ? "CP" : "PT";
+  if (par === 5) return shotNumber === 1 ? "1W" : shotNumber <= 3 ? "UT4" : shotNumber === 4 ? "CP" : "PT";
+  return "－";
+}
 
 function openPopup(shotIndex) {
   popupShotIndex = shotIndex;
+  loadPars();
+  const savedClub = data[hole-1][shotIndex].club;
+  popupClubSelection = savedClub && savedClub !== "－" ? savedClub : getDefaultClub(pars[hole-1], shotIndex);
 
   document.getElementById("popupTitle").textContent = "クラブと良否を選択";
   renderPopupOptions();
@@ -383,14 +395,13 @@ function renderPopupOptions() {
   const clubOptions = options.querySelector(".club-options");
   clubs.forEach(club => {
     const button = document.createElement("button");
-    button.className = "popup-option" + (shot.club === club ? " selected" : "");
+    button.className = "popup-option" + (popupClubSelection === club ? " selected" : "");
     button.textContent = club;
     button.onclick = () => {
       const holeIndex = hole - 1;
       const shot = data[holeIndex][popupShotIndex];
-      const wasEntered = isShotEntered(shot);
+      popupClubSelection = club;
       shot.club = club;
-      if (!wasEntered && isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot);
       save();
       renderPopupOptions();
       render();
@@ -407,21 +418,25 @@ function renderPopupOptions() {
     button.onclick = () => {
       const holeIndex = hole - 1;
       const shot = data[holeIndex][popupShotIndex];
-      const wasEntered = isShotEntered(shot);
+      if (!shot.club || shot.club === "－") shot.club = popupClubSelection;
       shot.rating = rating;
-      if (!wasEntered && isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot);
       save();
-      renderPopupOptions();
       render();
-      document.getElementById("popupBackdrop").classList.add("show");
+      closePopup();
     };
     ratingOptions.appendChild(button);
   });
 }
 
 function closePopup() {
+  if (popupShotIndex >= 0) {
+    const holeIndex = hole - 1;
+    const shot = data[holeIndex][popupShotIndex];
+    if (isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot);
+  }
   document.getElementById("popupBackdrop").classList.remove("show");
   popupShotIndex = -1;
+  popupClubSelection = "－";
 }
 
 function nextHole() {
