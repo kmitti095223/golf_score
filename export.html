@@ -7,6 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>スコア一覧出力</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -41,6 +42,13 @@
   .content {
     flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden;
   }
+
+  .date-bar {
+    flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+    color: #586c63; font-size: 13px; font-weight: bold;
+  }
+  .date-bar select { min-width: 0; flex: 1; height: 38px; padding: 0 8px; border: 1px solid #d8e5df; border-radius: 6px; background: #fff; color: #17352a; }
+  .date-manage { color: #087a50; font-size: 13px; white-space: nowrap; }
 
   .info-card {
     flex-shrink: 0;
@@ -115,7 +123,13 @@
   </header>
 
   <main class="content">
+    <div class="date-bar">
+      <label for="dateSelect">プレー日</label>
+      <select id="dateSelect" aria-label="プレー日"></select>
+      <a class="date-manage" href="dates.html">日付管理</a>
+    </div>
     <div class="info-card">
+      <div id="roundInfo"></div>
       PC取り込み用（タブ区切りテキスト）です。<strong>「コピー」</strong>を押してExcelやスプレッドシート、メールなどにそのまま貼り付けできます。
     </div>
 
@@ -132,6 +146,7 @@
 
 <div id="toast" class="toast">コピーしました！</div>
 
+<script src="golf_data.js"></script>
 <script>
 const MAX_SHOTS = 12;
 
@@ -142,26 +157,21 @@ function createEmptyHoleData() {
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
 
 function loadData() {
-  const saved = localStorage.getItem("golfScoreDemo");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === 18) {
-        data = parsed.map(holeShots => {
-          const filled = createEmptyHoleData();
-          holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
-            filled[i] = {
-              club: shot.club || "－",
-              rating: shot.rating || "－",
-              bunker: shot.bunker === true,
-              ...(shot.location ? { location: shot.location } : {})
-            };
-          });
-          return filled;
-        });
-      }
-    } catch(e) {}
-  }
+  const round = GolfData.getRound();
+  const parsed = round?.data;
+  if (!Array.isArray(parsed) || parsed.length !== 18) return;
+  data = parsed.map(holeShots => {
+    const filled = createEmptyHoleData();
+    holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
+      filled[i] = {
+        club: shot.club || "－",
+        rating: shot.rating || "－",
+        bunker: shot.bunker === true,
+        ...(shot.location ? { location: shot.location } : {})
+      };
+    });
+    return filled;
+  });
 }
 
 function generateTsv() {
@@ -235,7 +245,9 @@ function downloadTsv(content) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "golf_score.tsv";
+  const courseName = GolfData.getRound()?.courseName || "";
+  const safeCourseName = courseName.replace(/[\\/:*?"<>|]/g, "_").trim();
+  a.download = `golf_score_${GolfData.getSelectedDate()}${safeCourseName ? `_${safeCourseName}` : ""}.tsv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -243,9 +255,26 @@ function downloadTsv(content) {
   showToast("TSVファイルをダウンロードしました");
 }
 
-const tsvContent = generateTsv();
 const textarea = document.getElementById("tsvOutput");
-textarea.value = tsvContent;
+
+function renderDateSelect() {
+  const selectedDate = GolfData.getSelectedDate();
+  const select = document.getElementById("dateSelect");
+  select.innerHTML = GolfData.getRounds().map(round =>
+    `<option value="${round.date}">${round.date}${round.courseName ? ` - ${GolfData.escapeHtml(round.courseName)}` : ""}</option>`
+  ).join("");
+  select.value = selectedDate;
+  const courseName = GolfData.getRound(selectedDate)?.courseName || "ゴルフ場名未設定";
+  document.getElementById("roundInfo").textContent = `${selectedDate} / ${courseName}`;
+  textarea.value = generateTsv();
+}
+
+document.getElementById("dateSelect").onchange = event => {
+  GolfData.setSelectedDate(event.target.value);
+  renderDateSelect();
+};
+
+GolfData.ready.then(renderDateSelect);
 
 // タップ時に全選択
 textarea.onclick = () => {

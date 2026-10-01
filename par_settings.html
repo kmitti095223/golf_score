@@ -7,6 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>パー設定</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -38,6 +39,7 @@
     text-decoration: none; font-size: 14px; font-weight: 700;
     padding: 6px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.5);
   }
+  .header-links { display: flex; gap: 6px; }
 
   .content {
     flex: 1; display: flex; flex-direction: column; gap: 8px;
@@ -103,12 +105,15 @@
   <header>
     <div class="top">
       <h1>各ホールのパー設定</h1>
-      <a href="summary.html" class="nav-link">‹ 一覧</a>
+      <div class="header-links">
+        <a href="dates.html" class="nav-link">日付管理</a>
+        <a href="summary.html" class="nav-link">‹ 一覧</a>
+      </div>
     </div>
   </header>
 
   <main class="content">
-    <p class="description">各ホールのパーを設定してください。設定値はこの端末に保存されます。</p>
+    <p class="description">各ホールのパーを設定してください。設定値はFirestoreに保存されます。</p>
     <div id="parGrid" class="par-grid"></div>
     <div class="actions">
       <button id="resetButton" class="action-button reset-button">標準値に戻す</button>
@@ -118,10 +123,10 @@
 </div>
 <div id="toast" class="toast">保存しました</div>
 
+<script src="golf_data.js"></script>
 <script>
 const HOLE_COUNT = 18;
 const DEFAULT_PAR = 4;
-const STORAGE_KEY = "golfParSettings";
 const MIN_PAR = 3;
 const MAX_PAR = 6;
 
@@ -130,19 +135,7 @@ function createDefaultPars() {
 }
 
 function loadPars() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return createDefaultPars();
-
-  try {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length === HOLE_COUNT) {
-      return parsed.map(value => {
-        const par = Number(value);
-        return Number.isInteger(par) && par >= MIN_PAR && par <= MAX_PAR ? par : DEFAULT_PAR;
-      });
-    }
-  } catch (e) {}
-  return createDefaultPars();
+  return GolfData.getParSettings();
 }
 
 function render(pars) {
@@ -187,7 +180,7 @@ function showToast(message) {
 }
 
 document.getElementById("saveButton").onclick = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(getParsFromInputs()));
+  GolfData.saveParSettings(getParsFromInputs());
   showToast("パー設定を保存しました");
 };
 
@@ -205,7 +198,7 @@ document.addEventListener("touchstart", e => {
 
 document.addEventListener("gesturestart", e => e.preventDefault());
 
-render(loadPars());
+GolfData.ready.then(() => render(loadPars()));
 </script>
 </body>
 </html>

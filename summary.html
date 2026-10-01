@@ -7,6 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>スコア一覧</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -60,6 +61,13 @@
   .content {
     flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
   }
+
+  .date-bar {
+    flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+    color: #586c63; font-size: 13px; font-weight: bold;
+  }
+  .date-bar select { min-width: 0; flex: 1; height: 36px; padding: 0 8px; border: 1px solid #d8e5df; border-radius: 6px; background: #fff; color: #17352a; }
+  .date-manage { color: #087a50; font-size: 12px; white-space: nowrap; }
 
   /* 上部トータルサマリー */
   .summary-card {
@@ -159,6 +167,11 @@
   </header>
 
   <main class="content">
+    <div class="date-bar">
+      <label for="dateSelect">プレー日</label>
+      <select id="dateSelect" aria-label="プレー日"></select>
+      <a class="date-manage" href="dates.html">日付管理</a>
+    </div>
     <div class="summary-card">
       <div><small>OUT</small><strong id="outScore">0</strong></div>
       <div><small>IN</small><strong id="inScore">0</strong></div>
@@ -197,6 +210,7 @@
   </main>
 </div>
 
+<script src="golf_data.js"></script>
 <script>
 const MAX_SHOTS = 12;
 
@@ -208,42 +222,25 @@ let data = Array.from({ length: 18 }, () => createEmptyHoleData());
 let pars = Array.from({ length: 18 }, () => 4);
 
 function loadData() {
-  const saved = localStorage.getItem("golfScoreDemo");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === 18) {
-        data = parsed.map(holeShots => {
-          const filled = createEmptyHoleData();
-          holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
-            filled[i] = {
-              club: shot.club || "－",
-              rating: shot.rating || "－",
-              bunker: shot.bunker === true
-            };
-          });
-          return filled;
-        });
-      }
-    } catch(e) {}
-  } else {
-    data = Array.from({ length: 18 }, () => createEmptyHoleData());
+  const round = GolfData.getRound();
+  const parsed = round?.data;
+  if (Array.isArray(parsed) && parsed.length === 18) {
+    data = parsed.map(holeShots => {
+      const filled = createEmptyHoleData();
+      holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
+        filled[i] = {
+          club: shot.club || "－",
+          rating: shot.rating || "－",
+          bunker: shot.bunker === true
+        };
+      });
+      return filled;
+    });
   }
 }
 
 function loadPars() {
-  const saved = localStorage.getItem("golfParSettings");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === 18) {
-        pars = parsed.map(value => {
-          const par = Number(value);
-          return Number.isInteger(par) && par >= 3 && par <= 6 ? par : 4;
-        });
-      }
-    } catch(e) {}
-  }
+  pars = GolfData.getParSettings();
 }
 
 function isShotEntered(shot) {
@@ -292,6 +289,12 @@ function getRatingSymbols(shots) {
 function renderSummary() {
   loadData();
   loadPars();
+  const selectedDate = GolfData.getSelectedDate();
+  const dateSelect = document.getElementById("dateSelect");
+  dateSelect.innerHTML = GolfData.getRounds().map(round =>
+    `<option value="${round.date}">${round.date}${round.courseName ? ` - ${GolfData.escapeHtml(round.courseName)}` : ""}</option>`
+  ).join("");
+  dateSelect.value = selectedDate;
   const holeScores = data.map(getHoleScore);
   const puttScores = data.map(getPuttScore);
 
@@ -364,9 +367,16 @@ function renderTableSection(containerId, startIdx, endIdx, sectionTotalScore, se
 }
 
 // データ全消去イベント
+document.getElementById("dateSelect").onchange = event => {
+  GolfData.setSelectedDate(event.target.value);
+  renderSummary();
+};
+
+document.getElementById("clearDataBtn").textContent = "当日クリア";
 document.getElementById("clearDataBtn").onclick = () => {
-  if (confirm("全てのスコアデータを消去しますか？")) {
-    localStorage.removeItem("golfScoreDemo");
+  if (confirm(`${GolfData.getSelectedDate()}のスコアデータを消去しますか？`)) {
+    data = Array.from({ length: 18 }, () => createEmptyHoleData());
+    GolfData.saveScores(data);
     renderSummary();
   }
 };
@@ -386,7 +396,7 @@ document.addEventListener('gesturestart', (e) => {
   e.preventDefault();
 });
 
-renderSummary();
+GolfData.ready.then(renderSummary);
 </script>
 </body>
 </html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プレー日管理</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif; background: #f3f6f4; color: #17352a; }
+  button, input { font: inherit; }
+  .app { max-width: 560px; min-height: 100vh; margin: auto; background: #fff; display: flex; flex-direction: column; }
+  header { flex-shrink: 0; padding: 12px 16px; color: #fff; background: #087a50; box-shadow: 0 2px 8px #0002; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-size: 19px; }
+  .nav-link { color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; padding: 7px 10px; border: 1px solid #ffffff80; border-radius: 6px; white-space: nowrap; }
+  main { display: flex; flex-direction: column; gap: 14px; padding: 16px 14px 24px; }
+  .add-form { display: grid; grid-template-columns: 1fr 1.3fr auto; align-items: end; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid #dce8e3; }
+  label { display: flex; flex: 1; flex-direction: column; gap: 5px; color: #586c63; font-size: 12px; font-weight: 700; }
+  input[type="date"], input[type="text"] { width: 100%; min-width: 0; height: 42px; padding: 0 9px; border: 1px solid #cbdcd4; border-radius: 6px; color: #17352a; background: #fff; }
+  button { min-height: 40px; padding: 7px 11px; border: 1px solid #087a50; border-radius: 6px; color: #087a50; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .primary { color: #fff; background: #087a50; }
+  .round-list { display: flex; flex-direction: column; gap: 8px; }
+  .round-row { display: grid; gap: 8px; padding: 9px; border: 1px solid #dce8e3; border-radius: 6px; background: #fff; }
+  .round-row.selected { border-color: #087a50; background: #f0f7f4; }
+  .round-fields { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; }
+  .round-actions { display: flex; justify-content: flex-end; gap: 6px; }
+  .round-row button { padding: 6px 9px; min-height: 36px; }
+  .round-row .delete { color: #b42318; border-color: #e5b5b1; }
+  .round-row .delete:disabled { opacity: .4; cursor: default; }
+  .empty { margin: 0; padding: 20px 8px; text-align: center; color: #586c63; }
+  .nav-list { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; border-top: 1px solid #dce8e3; }
+  .nav-list a { color: #087a50; font-size: 13px; font-weight: 700; }
+  @media (max-width: 430px) {
+    .add-form { grid-template-columns: 1fr 1fr; }
+    .add-form button { grid-column: 1 / -1; }
+    .round-fields { grid-template-columns: 1fr; }
+    .round-actions { justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="top">
+      <h1>プレー日管理</h1>
+      <a href="summary.html" class="nav-link">‹ スコア一覧</a>
+    </div>
+  </header>
+  <main>
+    <form id="addForm" class="add-form">
+      <label>プレー日<input id="newDate" type="date" required></label>
+      <label>ゴルフ場名<input id="newCourseName" type="text" maxlength="80" placeholder="例：松の森カントリークラブ"></label>
+      <button class="primary" type="submit">日付を追加</button>
+    </form>
+    <div id="roundList" class="round-list"></div>
+    <nav class="nav-list" aria-label="画面移動">
+      <a href="golf_score.html">スコア入力</a>
+      <a href="summary.html">スコア一覧</a>
+      <a href="export.html">データ出力</a>
+      <a href="par_settings.html">Par設定</a>
+    </nav>
+  </main>
+</div>
+<script src="golf_data.js"></script>
+<script>
+const newDateInput = document.getElementById("newDate");
+const newCourseNameInput = document.getElementById("newCourseName");
+newDateInput.value = GolfData.today();
+
+function renderRounds() {
+  const rounds = GolfData.getRounds();
+  const selectedDate = GolfData.getSelectedDate();
+  const list = document.getElementById("roundList");
+  if (rounds.length === 0) {
+    list.innerHTML = '<p class="empty">登録された日付はありません。</p>';
+    return;
+  }
+
+  list.innerHTML = rounds.map(round => `
+    <div class="round-row ${round.date === selectedDate ? "selected" : ""}" data-date="${round.date}">
+      <div class="round-fields">
+        <label>プレー日<input class="edit-date" type="date" value="${round.date}" aria-label="${round.date}の日付を変更"></label>
+        <label>ゴルフ場名<input class="edit-course" type="text" maxlength="80" value="${GolfData.escapeHtml(round.courseName || "")}" placeholder="ゴルフ場名" aria-label="${round.date}のゴルフ場名"></label>
+      </div>
+      <div class="round-actions">
+        <button type="button" class="select-round ${round.date === selectedDate ? "primary" : ""}">${round.date === selectedDate ? "選択中" : "選択"}</button>
+        <button type="button" class="change-date">変更を保存</button>
+        <button type="button" class="delete" ${rounds.length <= 1 ? "disabled" : ""}>削除</button>
+      </div>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".round-row").forEach(row => {
+    const oldDate = row.dataset.date;
+    row.querySelector(".select-round").onclick = () => {
+      GolfData.setSelectedDate(oldDate);
+      renderRounds();
+    };
+    row.querySelector(".change-date").onclick = () => {
+      const nextDate = row.querySelector(".edit-date").value;
+      if (!nextDate) return alert("変更後の日付を入力してください。");
+      if (nextDate !== oldDate && GolfData.getRounds().some(round => round.date === nextDate)) {
+        return alert("その日付はすでに登録されています。");
+      }
+      const courseName = row.querySelector(".edit-course").value;
+      GolfData.renameRound(oldDate, nextDate, courseName);
+      renderRounds();
+    };
+    row.querySelector(".delete").onclick = () => {
+      if (!confirm(`${oldDate}のスコアデータを削除しますか？`)) return;
+      GolfData.deleteRound(oldDate);
+      renderRounds();
+    };
+  });
+}
+
+document.getElementById("addForm").onsubmit = event => {
+  event.preventDefault();
+  const date = newDateInput.value;
+  if (!date) return;
+  if (!GolfData.addRound(date, newCourseNameInput.value)) return alert("その日付はすでに登録されています。");
+  newCourseNameInput.value = "";
+  renderRounds();
+};
+
+GolfData.ready.then(renderRounds);
+</script>
+</body>
+</html>

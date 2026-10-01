@@ -7,6 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>スコア入力</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -42,6 +43,13 @@
   .content { 
     flex: 1; display: flex; flex-direction: column; padding: 6px 8px; overflow: hidden;
   }
+
+  .date-bar {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 4px 2px 8px; color: #586c63; font-size: 13px; font-weight: bold;
+  }
+  .date-bar select { min-width: 0; flex: 1; height: 38px; padding: 0 8px; border: 1px solid #d8e5df; border-radius: 6px; background: #fff; color: #17352a; }
+  .date-manage { color: #087a50; font-size: 13px; white-space: nowrap; }
   
   .round-info {
     flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 6px; margin-bottom: 6px;
@@ -210,6 +218,11 @@
   </header>
 
   <main class="content">
+    <div class="date-bar">
+      <label for="dateSelect">プレー日</label>
+      <select id="dateSelect" aria-label="プレー日"></select>
+      <a class="date-manage" href="dates.html">日付管理</a>
+    </div>
     <div class="hole-nav">
       <button class="navbtn" id="prevHole">‹</button>
       <div class="hole-title"><strong id="holeLabel">1H</strong></div>
@@ -252,6 +265,7 @@
   </div>
 </div>
 
+<script src="golf_data.js"></script>
 <script>
 const MAX_SHOTS = 12;
 const clubs = ["－","1W","5W","U4","UT4","5I","6I","7I","8I","9I","PW","SW","52度","58度","CP","PT","OK","OB","ペナルティ"];
@@ -284,18 +298,7 @@ function getPuttScore(shots) {
 }
 
 function loadPars() {
-  const saved = localStorage.getItem("golfParSettings");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === 18) {
-        pars = parsed.map(value => {
-          const par = Number(value);
-          return Number.isInteger(par) && par >= 3 && par <= 6 ? par : 4;
-        });
-      }
-    } catch(e) {}
-  }
+  pars = GolfData.getParSettings();
 }
 
 function getScoreMark(score, par) {
@@ -309,7 +312,7 @@ function getScoreMark(score, par) {
 }
 
 function save() {
-  localStorage.setItem("golfScoreDemo", JSON.stringify(data));
+  GolfData.saveScores(data);
 }
 
 function captureShotLocation(shotIndex, holeIndex, shot, force = false) {
@@ -541,26 +544,38 @@ document.addEventListener('touchstart', (e) => {
 
 window.addEventListener("pagehide", save);
 
-const saved = localStorage.getItem("golfScoreDemo");
-if (saved) {
-  try {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length === 18) {
-      data = parsed.map(holeShots => {
-        const filled = createEmptyHoleData();
-        holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
-          filled[i] = {
-            club: shot.club || "－",
-            rating: shot.rating || "－",
-            bunker: shot.bunker === true,
-            ...(shot.location ? { location: shot.location } : {})
-          };
-        });
-        return filled;
-      });
-    }
-  } catch(e) {}
+function loadSelectedScores() {
+  const round = GolfData.getRound();
+  if (!round || !Array.isArray(round.data) || round.data.length !== 18) return;
+  data = round.data.map(holeShots => {
+    const filled = createEmptyHoleData();
+    holeShots.slice(0, MAX_SHOTS).forEach((shot, i) => {
+      filled[i] = {
+        club: shot.club || "－",
+        rating: shot.rating || "－",
+        bunker: shot.bunker === true,
+        ...(shot.location ? { location: shot.location } : {})
+      };
+    });
+    return filled;
+  });
 }
+
+function renderDateSelect() {
+  const selectedDate = GolfData.getSelectedDate();
+  const select = document.getElementById("dateSelect");
+  select.innerHTML = GolfData.getRounds().map(round =>
+    `<option value="${round.date}">${round.date}${round.courseName ? ` - ${GolfData.escapeHtml(round.courseName)}` : ""}</option>`
+  ).join("");
+  select.value = selectedDate;
+}
+
+document.getElementById("dateSelect").onchange = event => {
+  save();
+  GolfData.setSelectedDate(event.target.value);
+  loadSelectedScores();
+  render();
+};
 
 // URLパラメータ ?hole=N でホールを指定
 const params = new URLSearchParams(window.location.search);
@@ -569,7 +584,11 @@ if (!isNaN(paramHole) && paramHole >= 1 && paramHole <= 18) {
   hole = paramHole;
 }
 
-render();
+GolfData.ready.then(() => {
+  loadSelectedScores();
+  renderDateSelect();
+  render();
+});
 </script>
 </body>
 </html>
