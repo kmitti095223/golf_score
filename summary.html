@@ -215,7 +215,7 @@
 const MAX_SHOTS = 12;
 
 function createEmptyHoleData() {
-  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", approach: false, bunker: false }));
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
@@ -231,6 +231,7 @@ function loadData() {
         filled[i] = {
           club: shot.club || "－",
           rating: shot.rating || "－",
+          approach: shot.approach === true,
           bunker: shot.bunker === true
         };
       });
@@ -256,7 +257,7 @@ function getHoleScore(shots) {
 }
 
 function getPuttScore(shots) {
-  return shots.filter(shot => shot.club === "PT").length;
+  return shots.filter(shot => shot.club === "PT" && !shot.approach && !shot.bunker).length;
 }
 
 function getScoreMark(score, par) {

@@ -130,6 +130,7 @@
   .popup-bunker-row {
     flex-shrink: 0; padding: 6px 0; color: #17352a; font-size: 14px; font-weight: bold;
   }
+  .popup-bunker-row { display: flex; gap: 18px; }
   .popup-bunker-row label { display: flex; align-items: center; gap: 8px; }
   .popup-bunker-row input { width: 20px; height: 20px; margin: 0; accent-color: #087a50; }
 
@@ -279,7 +280,7 @@ const requestedHole = Number(new URLSearchParams(window.location.search).get("ho
 let hole = Number.isInteger(requestedHole) && requestedHole >= 1 && requestedHole <= 18 ? requestedHole : 1;
 
 function createEmptyHoleData() {
-  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", bunker: false }));
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", approach: false, bunker: false }));
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
@@ -296,7 +297,7 @@ function getHoleScore(shots) {
 }
 
 function getPuttScore(shots) {
-  return shots.filter(shot => shot.club === "PT").length;
+  return shots.filter(shot => shot.club === "PT" && !shot.approach && !shot.bunker).length;
 }
 
 function loadPars() {
@@ -358,7 +359,8 @@ function render() {
     const location = shot.location;
     const latitude = location ? Number(location.latitude).toFixed(6) : "";
     const longitude = location ? Number(location.longitude).toFixed(6) : "";
-    const displayClub = `${shot.club || "－"}${shot.bunker ? "-B" : ""}`;
+    const shotFlags = `${shot.approach ? "A" : ""}${shot.bunker ? "B" : ""}`;
+    const displayClub = `${shot.club || "－"}${shotFlags ? `-${shotFlags}` : ""}`;
 
     div.innerHTML = `
       <div class="shot-head">
@@ -418,6 +420,7 @@ function quickRegisterShot() {
   const shot = {
     club: defaultClub === "－" ? "1W" : defaultClub,
     rating: "－",
+    approach: false,
     bunker: false
   };
   data[holeIndex][shotIndex] = shot;
@@ -442,9 +445,16 @@ document.getElementById("quickRegisterBtn").onclick = quickRegisterShot;
 function renderPopupOptions() {
   const options = document.getElementById("popupOptions");
   const shot = data[hole-1][popupShotIndex];
-  options.innerHTML = "<div class=\"popup-section-title\">クラブ</div><div class=\"popup-options club-options\"></div><div class=\"popup-bunker-row\"><label><input type=\"checkbox\" id=\"popupBunkerCheck\">バンカー</label></div><div class=\"popup-section-title\">良否</div><div class=\"popup-options rating-options\"></div>";
+  options.innerHTML = "<div class=\"popup-section-title\">クラブ</div><div class=\"popup-options club-options\"></div><div class=\"popup-bunker-row\"><label><input type=\"checkbox\" id=\"popupApproachCheck\">アプローチ</label><label><input type=\"checkbox\" id=\"popupBunkerCheck\">バンカー</label></div><div class=\"popup-section-title\">良否</div><div class=\"popup-options rating-options\"></div>";
+  const approachCheck = options.querySelector("#popupApproachCheck");
   const bunkerCheck = options.querySelector("#popupBunkerCheck");
+  approachCheck.checked = shot.approach === true;
   bunkerCheck.checked = shot.bunker === true;
+  approachCheck.onchange = () => {
+    shot.approach = approachCheck.checked;
+    save();
+    render();
+  };
   bunkerCheck.onchange = () => {
     shot.bunker = bunkerCheck.checked;
     save();
@@ -520,7 +530,7 @@ document.getElementById("popupClose").onclick = () => closePopup();
 document.getElementById("popupForceLocation").onclick = () => closePopup(true);
 document.getElementById("popupClear").onclick = () => {
   if (popupShotIndex < 0) return;
-  data[hole-1][popupShotIndex] = { club: "－", rating: "－", bunker: false };
+  data[hole-1][popupShotIndex] = { club: "－", rating: "－", approach: false, bunker: false };
   save();
   render();
   closePopup();

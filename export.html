@@ -151,7 +151,7 @@
 const MAX_SHOTS = 12;
 
 function createEmptyHoleData() {
-  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－" }));
+  return Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", approach: false, bunker: false }));
 }
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
@@ -166,6 +166,7 @@ function loadData() {
       filled[i] = {
         club: shot.club || "－",
         rating: shot.rating || "－",
+        approach: shot.approach === true,
         bunker: shot.bunker === true,
         ...(shot.location ? { location: shot.location } : {})
       };
@@ -188,7 +189,8 @@ function generateTsv() {
 
       if (hasClub || hasRating) {
         shotNum++;
-        const club = hasClub ? `${shot.club}${shot.bunker ? "-B" : ""}` : "";
+        const shotFlags = `${shot.approach ? "A" : ""}${shot.bunker ? "B" : ""}`;
+        const club = hasClub ? `${shot.club}${shotFlags ? `-${shotFlags}` : ""}` : "";
         const rating = hasRating ? shot.rating : "";
         const latitude = shot.location?.latitude ?? "";
         const longitude = shot.location?.longitude ?? "";

@@ -35,7 +35,7 @@
 
   function createEmptyScores() {
     return Array.from({ length: HOLE_COUNT }, () =>
-      Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", bunker: false }))
+      Array.from({ length: MAX_SHOTS }, () => ({ club: "－", rating: "－", approach: false, bunker: false }))
     );
   }
 
