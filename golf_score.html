@@ -63,11 +63,12 @@
   .stat .score-mark { font-size: 24px; }
   .score-under { color: #d32f2f; }
   .quick-register-btn {
-    min-width: 58px; min-height: 54px; padding: 4px 6px; border: 1px solid #087a50;
-    border-radius: 6px; background: #087a50; color: #fff; font-size: 11px; font-weight: bold;
-    white-space: nowrap; cursor: pointer;
+    width: 52px; min-height: 54px; padding: 4px 3px; border: 1px solid #087a50;
+    border-radius: 6px; background: #087a50; color: #fff; font-size: 13px; font-weight: bold;
+    line-height: 1.2; cursor: pointer;
   }
   .quick-register-btn:disabled { opacity: 0.45; cursor: default; }
+  .shot-actions { display: flex; align-items: stretch; gap: 4px; }
 
   .stat.highlight {
     background: #087a50; color: #ffffff;
@@ -236,7 +237,10 @@
       <div class="stat"><small>Par</small><strong id="currentPar">4</strong></div>
       <div class="stat"><small>スコア</small><strong id="holeScore">0(0)</strong></div>
       <div class="stat"><small>記号</small><strong id="currentScoreMark" class="score-mark">-</strong></div>
-      <button type="button" class="quick-register-btn" id="quickRegisterBtn">簡易登録</button>
+      <div class="shot-actions">
+        <button type="button" class="quick-register-btn" id="quickRegisterBtn">簡易<br>登録</button>
+        <button type="button" class="quick-register-btn" id="batchRegisterBtn">一括<br>入力</button>
+      </div>
     </div>
 
     <section class="card">
@@ -285,6 +289,7 @@ function createEmptyHoleData() {
 
 let data = Array.from({ length: 18 }, () => createEmptyHoleData());
 let pars = Array.from({ length: 18 }, () => 4);
+let isBatchInput = false;
 
 function isShotEntered(shot) {
   const hasClub = shot.club !== "" && shot.club !== "－";
@@ -319,10 +324,10 @@ function save() {
 }
 
 function captureShotLocation(shotIndex, holeIndex, shot, force = false) {
-  if (!navigator.geolocation || (shot.location && !force)) return;
+  if (isBatchInput || !navigator.geolocation || (shot.location && !force)) return;
 
   navigator.geolocation.getCurrentPosition(position => {
-    if (data[holeIndex][shotIndex] !== shot || !isShotEntered(shot)) return;
+    if (isBatchInput || data[holeIndex][shotIndex] !== shot || !isShotEntered(shot)) return;
     shot.location = {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude
@@ -436,12 +441,37 @@ function openPopup(shotIndex) {
   popupClubSelection = savedClub && savedClub !== "－" ? savedClub : getDefaultClub(pars[hole-1], shotIndex);
 
   document.getElementById("popupTitle").textContent = "クラブと良否を選択";
+  document.getElementById("popupClose").textContent = isBatchInput ? "一括入力終了" : "完了";
+  document.getElementById("popupForceLocation").style.display = isBatchInput ? "none" : "";
   renderPopupOptions();
   document.getElementById("popupBackdrop").classList.add("show");
 }
 
 
 document.getElementById("quickRegisterBtn").onclick = quickRegisterShot;
+document.getElementById("batchRegisterBtn").onclick = () => {
+  data[hole-1] = createEmptyHoleData();
+  save();
+  render();
+  isBatchInput = true;
+  openPopup(0);
+};
+
+function endBatchInput() {
+  closePopup();
+  isBatchInput = false;
+}
+
+function advanceBatchInput() {
+  const nextShotIndex = getNextShotIndex(data[hole-1]);
+  if (nextShotIndex >= MAX_SHOTS) {
+    endBatchInput();
+    return;
+  }
+  closePopup();
+  openPopup(nextShotIndex);
+}
+
 function renderPopupOptions() {
   const options = document.getElementById("popupOptions");
   const shot = data[hole-1][popupShotIndex];
@@ -491,7 +521,8 @@ function renderPopupOptions() {
       shot.rating = rating;
       save();
       render();
-      closePopup();
+      if (isBatchInput) advanceBatchInput();
+      else closePopup();
     };
     ratingOptions.appendChild(button);
   });
@@ -501,7 +532,7 @@ function closePopup(forceLocationUpdate = false) {
   if (popupShotIndex >= 0) {
     const holeIndex = hole - 1;
     const shot = data[holeIndex][popupShotIndex];
-    if (isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot, forceLocationUpdate);
+    if (!isBatchInput && isShotEntered(shot)) captureShotLocation(popupShotIndex, holeIndex, shot, forceLocationUpdate);
   }
   document.getElementById("popupBackdrop").classList.remove("show");
   popupShotIndex = -1;
@@ -526,20 +557,30 @@ function prevHole() {
 document.getElementById("nextHole").onclick = nextHole;
 document.getElementById("prevHole").onclick = prevHole;
 
-document.getElementById("popupClose").onclick = () => closePopup();
+document.getElementById("popupClose").onclick = () => {
+  if (isBatchInput) endBatchInput();
+  else closePopup();
+};
 document.getElementById("popupForceLocation").onclick = () => closePopup(true);
 document.getElementById("popupClear").onclick = () => {
   if (popupShotIndex < 0) return;
   data[hole-1][popupShotIndex] = { club: "－", rating: "－", approach: false, bunker: false };
   save();
   render();
-  closePopup();
+  if (isBatchInput) endBatchInput();
+  else closePopup();
 };
 document.getElementById("popupBackdrop").onclick = (e) => {
-  if (e.target.id === "popupBackdrop") closePopup();
+  if (e.target.id === "popupBackdrop") {
+    if (isBatchInput) endBatchInput();
+    else closePopup();
+  }
 };
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closePopup();
+  if (e.key === "Escape") {
+    if (isBatchInput) endBatchInput();
+    else closePopup();
+  }
 });
 
 document.addEventListener('touchmove', (e) => {
@@ -565,6 +606,7 @@ function loadSelectedScores() {
       filled[i] = {
         club: shot.club || "－",
         rating: shot.rating || "－",
+        approach: shot.approach === true,
         bunker: shot.bunker === true,
         ...(shot.location ? { location: shot.location } : {})
       };
