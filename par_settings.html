@@ -86,14 +86,6 @@
   .save-button { background: #087a50; color: #fff; }
   .reset-button { background: #e7f4ef; color: #087a50; border: 1.5px solid #087a50; }
 
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    padding: 10px 18px; border-radius: 20px; background: rgba(23, 53, 42, 0.92);
-    color: #fff; font-size: 14px; font-weight: bold; opacity: 0;
-    pointer-events: none; transition: opacity 0.2s; z-index: 10;
-  }
-  .toast.show { opacity: 1; }
-
   @media (min-width: 700px) {
     body { padding: 12px; }
     .app { height: calc(100vh - 24px); border-radius: 14px; box-shadow: 0 8px 35px #0001; }
@@ -113,7 +105,7 @@
   </header>
 
   <main class="content">
-    <p class="description">各ホールのパーを設定してください。設定値はFirestoreに保存されます。</p>
+    <p class="description">各ホールのパーを設定してください。</p>
     <div id="parGrid" class="par-grid"></div>
     <div class="actions">
       <button id="resetButton" class="action-button reset-button">標準値に戻す</button>
@@ -121,8 +113,6 @@
     </div>
   </main>
 </div>
-<div id="toast" class="toast">保存しました</div>
-
 <script src="golf_data.js"></script>
 <script>
 const HOLE_COUNT = 18;
@@ -172,16 +162,8 @@ function changePar(index, amount) {
   input.value = nextPar;
 }
 
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1800);
-}
-
 document.getElementById("saveButton").onclick = () => {
   GolfData.saveParSettings(getParsFromInputs());
-  showToast("パー設定を保存しました");
 };
 
 document.getElementById("resetButton").onclick = () => {
