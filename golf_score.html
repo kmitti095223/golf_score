@@ -132,7 +132,12 @@
     flex-shrink: 0; padding: 6px 0; color: #17352a; font-size: 14px; font-weight: bold;
   }
   .popup-bunker-row { display: flex; gap: 18px; }
-  .popup-bunker-row label { display: flex; align-items: center; gap: 8px; }
+  .popup-bunker-row label {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+    border: 1px solid #d8e5df; border-radius: 6px; color: #586c63;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .popup-bunker-row label.checked { background: #e7f4ef; border-color: #087a50; color: #087a50; }
   .popup-bunker-row input { width: 20px; height: 20px; margin: 0; accent-color: #087a50; }
 
   .select-button {
@@ -437,8 +442,13 @@ function quickRegisterShot() {
 function openPopup(shotIndex) {
   popupShotIndex = shotIndex;
   loadPars();
-  const savedClub = data[hole-1][shotIndex].club;
+  const shot = data[hole-1][shotIndex];
+  const savedClub = shot.club;
   popupClubSelection = savedClub && savedClub !== "－" ? savedClub : getDefaultClub(pars[hole-1], shotIndex);
+  if (popupClubSelection === "CP" && !shot.approach) {
+    shot.approach = true;
+    save();
+  }
 
   document.getElementById("popupTitle").textContent = "クラブと良否を選択";
   document.getElementById("popupClose").textContent = isBatchInput ? "一括入力終了" : "完了";
@@ -480,13 +490,17 @@ function renderPopupOptions() {
   const bunkerCheck = options.querySelector("#popupBunkerCheck");
   approachCheck.checked = shot.approach === true;
   bunkerCheck.checked = shot.bunker === true;
+  approachCheck.parentElement.classList.toggle("checked", approachCheck.checked);
+  bunkerCheck.parentElement.classList.toggle("checked", bunkerCheck.checked);
   approachCheck.onchange = () => {
     shot.approach = approachCheck.checked;
+    approachCheck.parentElement.classList.toggle("checked", approachCheck.checked);
     save();
     render();
   };
   bunkerCheck.onchange = () => {
     shot.bunker = bunkerCheck.checked;
+    bunkerCheck.parentElement.classList.toggle("checked", bunkerCheck.checked);
     save();
     render();
   };
@@ -501,6 +515,7 @@ function renderPopupOptions() {
       const shot = data[holeIndex][popupShotIndex];
       popupClubSelection = club;
       shot.club = club;
+      if (club === "58度" || club === "CP") shot.approach = true;
       save();
       renderPopupOptions();
       render();

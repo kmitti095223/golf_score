@@ -73,26 +73,6 @@
     localStorage.setItem(PARS_KEY, JSON.stringify(parSettings));
   }
 
-  function showCloudStatus(message, state, temporary = false) {
-    let banner = document.getElementById("cloudStatus");
-    if (!banner) {
-      banner = document.createElement("div");
-      banner.id = "cloudStatus";
-      Object.assign(banner.style, {
-        position: "fixed", left: "50%", bottom: "12px", transform: "translateX(-50%)",
-        zIndex: "2000", maxWidth: "calc(100vw - 24px)", padding: "9px 14px",
-        borderRadius: "6px", color: "#fff", fontSize: "13px", fontWeight: "700",
-        textAlign: "center", boxShadow: "0 2px 8px #0003"
-      });
-      document.body.appendChild(banner);
-    }
-    banner.textContent = message;
-    banner.style.background = state === "error" ? "#b42318" : state === "working" ? "#5c665f" : "#087a50";
-    banner.style.display = "block";
-    clearTimeout(banner.hideTimer);
-    if (temporary) banner.hideTimer = setTimeout(() => { banner.style.display = "none"; }, 1800);
-  }
-
   function loadSdkScript(fileName) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
@@ -154,12 +134,9 @@
     writeQueue = writeQueue.catch(() => {}).then(async () => {
       if (!cloudReady && readyPromise) await readyPromise;
       if (!cloudReady || !currentUser) throw new Error("Firestoreに接続されていません");
-      showCloudStatus("Firestoreに保存中...", "working");
       await write(userDocument());
-      showCloudStatus("Firestoreに保存しました", "success", true);
     }).catch(error => {
       console.error("Firestore write failed:", error);
-      showCloudStatus("Firestoreへの保存に失敗しました。通信と設定を確認してください。", "error");
     });
     return writeQueue;
   }
@@ -178,7 +155,6 @@
   }
 
   async function initializeCloud() {
-    showCloudStatus("Firestoreに接続中...", "working");
     document.body.style.pointerEvents = "none";
     try {
       await loadFirebaseSdk();
@@ -215,7 +191,6 @@
         localStorage.setItem(SELECTED_DATE_KEY, latestDate);
       }
       cloudReady = true;
-      showCloudStatus("Firestoreに接続しました", "success", true);
       return true;
     } catch (error) {
       console.error("Firestore initialization failed:", error);
@@ -224,7 +199,6 @@
       saveLocalCache();
       const selectedDate = localStorage.getItem(SELECTED_DATE_KEY);
       if (!rounds.some(round => round.date === selectedDate)) localStorage.setItem(SELECTED_DATE_KEY, rounds[0].date);
-      showCloudStatus("Firestoreに接続できません。Firebase設定を確認してください。", "error");
       return false;
     } finally {
       document.body.style.pointerEvents = "";
