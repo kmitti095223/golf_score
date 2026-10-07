@@ -450,7 +450,7 @@ function openPopup(shotIndex) {
     save();
   }
 
-  document.getElementById("popupTitle").textContent = "クラブと良否を選択";
+  document.getElementById("popupTitle").textContent = `${hole}H 第${shotIndex + 1}打 — クラブと良否を選択`;
   document.getElementById("popupClose").textContent = isBatchInput ? "一括入力終了" : "完了";
   document.getElementById("popupForceLocation").style.display = isBatchInput ? "none" : "";
   renderPopupOptions();
